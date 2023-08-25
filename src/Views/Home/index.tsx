@@ -61,11 +61,10 @@ export default function Home() {
     return unsubscribe;
   }
 
-  useFocusEffect(
-    useCallback(() => {
-        getDatas();
-    }, [])
-);
+  useEffect(() =>{
+
+    getDatas();
+  },[])
   useEffect(() => {
     fetchData();
   }, [navigation]);

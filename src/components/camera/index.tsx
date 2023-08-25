@@ -73,7 +73,7 @@ export default function Cam() {
 
     const saveEvidence = {
       [nameImage]:{
-        uri:asset.uri,
+        uri:asset,
         lat:currentLocation.coords.latitude,
         lng:currentLocation.coords.longitude
       }
@@ -111,7 +111,7 @@ export default function Cam() {
       if (!folderInfo) {
         const asset = await MediaLibrary.createAssetAsync(fileUri);
         await MediaLibrary.createAlbumAsync(folderName, asset, true);
-        saveAsync(nameImage, asset);
+        saveAsync(nameImage, fileUri);
         return
       }
      
@@ -126,7 +126,7 @@ export default function Cam() {
       const asset = await MediaLibrary.createAssetAsync(fileUri);
       await MediaLibrary.addAssetsToAlbumAsync([asset], folderInfo, true);
 
-      saveAsync(nameImage, asset);
+      saveAsync(nameImage, fileUri);
     }
     catch (error) {
       console.error('Error saving picture:', error);

@@ -181,7 +181,7 @@ export function Register() {
 
       const location = await sandToS3(pictureEvidence.filename, evidence64)
      
-      if (pictureEvidence.filename.includes( 'carga')) {
+      if (pictureEvidence.filename ===  'carga.jpg') {
         setChargeEvidence({
           date: new Date(),
           name: location,
@@ -189,7 +189,7 @@ export function Register() {
         })
       }
 
-      else if (pictureEvidence.filename.includes( 'descarga')) {
+      else if (pictureEvidence.filename =='descarga.jpg') {
         setDischargeEvidence({
           date: new Date(),
           name: location,
@@ -205,6 +205,7 @@ export function Register() {
       }
 
     }
+    // await AsyncStorage.clear()
     handleFinalized()
   }
 
@@ -213,7 +214,7 @@ export function Register() {
     const document = await AsyncStorage.getItem('document');
     const documentParse = JSON.parse(document as string);
     const { id }: any = route.params;
-    const nameMemory = JSON.stringify(id)
+    
     const objctSend = {
       chargeEvidence,
       dischargeEvidence,
@@ -222,7 +223,6 @@ export function Register() {
       historicoEstoqueId: id,
       s3: true,
     };
-    // console.log(objctSend)
 
   await uploadDatas(objctSend)
   }
@@ -247,6 +247,21 @@ export function Register() {
         { text: 'OK', onPress: () => console.log('OK Pressed') },
       ]);
     }
+
+  }
+
+  async function handleDeleteEvidence(param:string){
+    const { id }: any = route.params;
+    const nameMemory = JSON.stringify(id)
+
+    const deleteEvidence = await AsyncStorage.getItem(nameMemory)
+    const asyncJson = JSON.parse(deleteEvidence)
+    const exclusion = asyncJson[param] = undefined
+
+    await FileSystem.deleteAsync('file:///data/user/0/host.exp.exponent/files/142676/carga.jpg');
+    console.log(exclusion)
+    // await AsyncStorage.mergeItem(nameMemory,exclusion)
+    // file:///data/user/0/host.exp.exponent/files/142676/carga.jpg
 
   }
   useFocusEffect(
@@ -332,10 +347,10 @@ export function Register() {
 
       <View style={styles.toCam}>
         {chargeExist ? (
-          <View style={styles.viewEvidences}>
+          <TouchableOpacity style={styles.viewEvidences} onPress={()=>handleDeleteEvidence('carga')}>
             <Text>{chargeExist.name}</Text>
             <Image source={{ uri: chargeExist.uri }} style={styles.evidence}></Image>
-          </View>
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.buttonCam}
@@ -343,14 +358,13 @@ export function Register() {
             <Text style={styles.text}>Carga</Text>
             <Icon name="camera" size={30} color="#370acd" />
           </TouchableOpacity>
-
         )}
         {dischargeExist ? (
-          <View style={styles.viewEvidences}>
+          <TouchableOpacity style={styles.viewEvidences}>
             <Text>{dischargeExist.name}</Text>
             <Image source={{ uri: dischargeExist.uri }} style={styles.evidence}></Image>
 
-          </View>
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.buttonCam}
@@ -360,10 +374,10 @@ export function Register() {
           </TouchableOpacity>
         )}
         {documentExist ? (
-          <View style={styles.viewEvidences}>
+          <TouchableOpacity style={styles.viewEvidences}>
             <Text>{documentExist.name}</Text>
             <ImageBackground source={{ uri: documentExist.uri }} style={styles.evidence}></ImageBackground>
-          </View>
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.buttonCam}
