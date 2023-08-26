@@ -168,6 +168,7 @@ const [documentoExist,setDocumentoExist] = useState(null)
   }
   async function sendBackend() {
     setSpinerStart(true)
+    if(spinerStart) return
     const { id }: any = route.params;
     const folderName = id.toString();
     const folderInfo = await MediaLibrary.getAlbumAsync(folderName);
@@ -418,7 +419,7 @@ const [documentoExist,setDocumentoExist] = useState(null)
 
         )}
       </View>
-        {documentoExist && chargeExist &&dischargeExist &&documentExist?(
+        {documentoExist && chargeExist && dischargeExist &&documentExist?(
         <TouchableOpacity onPress={sendBackend} style={styles.sendEvidencesView}>
           <Text style={{ color: 'white' }}>Enviar</Text>
         </TouchableOpacity>
