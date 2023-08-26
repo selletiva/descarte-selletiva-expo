@@ -13,12 +13,12 @@ import React, {
   useState,
 } from 'react';
 
-// import ModalAlert from '../components/Modal';
 import {
   StackAuthenticatedParamList,
   StackNotAuthenticatedParamList,
 } from '../routes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ModalAlert from '../components/Modal';
 
 export const AuthContext = createContext({} as AuthProviderReturn);
 
@@ -112,7 +112,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
 
   return (
     <AuthContext.Provider value={returnedValues}>
-      {/* <ModalAlert setActive={openModal} showModal={active} text={textModal} /> */}
+      <ModalAlert setActive={openModal} showModal={active} text={textModal} />
       {children}
     </AuthContext.Provider>
   );

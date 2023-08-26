@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, Button, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { Alert, Button, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { Camera, CameraType } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -7,50 +7,22 @@ import * as FileSystem from 'expo-file-system';
 import React from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from 'expo-location';
+import { Spiner } from "../Spiner";
 
 
 export default function Cam() {
   const route = useRoute();
   const [type, setType] = useState(CameraType.back);
-  const [permission, requestPermission] = Camera.useCameraPermissions();
-  const [hasCameraPermission, setHasCameraPermission] = useState(null);
   const [captured, setCapturedImage] = useState(null)
-  const [hasMediaLibraryPermission, setHasMediaLibraryPermission] = useState(null);
-  const [permissionResponseMedia, requestPermissionMedia] = MediaLibrary.usePermissions();
+
   const cameraRef = useRef<Camera>(null);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    (async () => {
-      const cameraStatus = await Camera.requestCameraPermissionsAsync();
-      setHasCameraPermission(cameraStatus.status === 'granted');
-
-    })();
-    (async () => {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      setHasMediaLibraryPermission(status === 'granted');
-    })();
-
-  }, []);
+  const [spinerStart, setSpinerStart] = useState(false)
+ 
 
 
-  if (hasCameraPermission === false) {
-    return (
-      <View style={styles.container}>
-        <Text style={{ textAlign: 'center' }}>We need your permission to show cam</Text>
-        <Button onPress={requestPermission} title="Permitir" />
-      </View>
-    );
-  }
-
-  if (hasMediaLibraryPermission === false) {
-    return (
-      <View style={styles.container}>
-        <Text style={{ textAlign: 'center' }}>We need your permission to save image</Text>
-        <Button onPress={requestPermissionMedia} title="Permitir" />
-      </View>
-    );
-  }
+ 
 
 
   async function capture() {
@@ -65,7 +37,7 @@ export default function Cam() {
   };
 
   async function saveAsync(nameImage, asset) {
-    await Location.requestForegroundPermissionsAsync();
+   
     const { id }: any = route.params;
     const nameMemory = JSON.stringify(id)
     let currentLocation = await Location.getCurrentPositionAsync({});
@@ -91,9 +63,13 @@ export default function Cam() {
       ]);
     }
 
+    setSpinerStart(false)
+
   }
 
   async function savePicture() {
+    console.log(captured)
+    setSpinerStart(true)
     const { id }: any = route.params;
     const { type }: any = route.params;
     const nameImage = `${type.toString()}`;
@@ -139,14 +115,16 @@ export default function Cam() {
 
   return (
     <Camera style={styles.camera} type={type} ref={cameraRef}>
+        {spinerStart ? <Spiner showSpiner={spinerStart}/> : null}
       <View style={styles.buttonContainer}>
         {captured ? (
           <TouchableOpacity onPress={savePicture}>
+            <Image source={{ uri: captured }} style={styles.evidence}></Image>
             <Text style={styles.text}>SALVAR</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity onPress={capture}>
-            <Text style={styles.text}>BATER</Text>
+            <Text style={styles.text}>TIRAR</Text>
           </TouchableOpacity>
 
         )}
@@ -175,5 +153,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
+    alignSelf:'center'
   },
+  evidence:{
+    height:600,
+    width:400
+  }
 });

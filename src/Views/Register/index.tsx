@@ -27,6 +27,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { StackAuthenticatedParamList } from '../../routes';
 import Api from '../../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Spiner } from '../../components/Spiner';
 
 type returnDatas = {
   id: Number;
@@ -48,10 +49,9 @@ export function Register() {
     [],
   );
 
-  const [chargeEvidence, setChargeEvidence] = useState(null)
-  const [dischargeEvidence, setDischargeEvidence] = useState(null)
-  const [documentEvidence, setDocumentEvidence] = useState(null)
-
+  const [spinerStart, setSpinerStart] = useState(false)
+  const allLocations ={carga:null,descarga:null,documento:null}
+const [documentoExist,setDocumentoExist] = useState(null)
 
   const route = useRoute();
 
@@ -126,6 +126,7 @@ export function Register() {
     const local = JSON.parse(dado)
 
     if (local.document) {
+      setDocumentoExist(true)
       setNameSave("Reenviar")
       setDocumento('Já registrado'),
         setUnidade(local.document.unit)
@@ -157,13 +158,16 @@ export function Register() {
       Body: decodedBuffer,
     };
     try {
-      const response = await s3.upload(datas).promise();
-      return response.Location
+      const {Location} = await s3.upload(datas).promise();
+     allLocations[name]=Location
     } catch (error) {
-      console.log(error, 'oi')
+      Alert.alert('Erro', 'Erro ao salvar evidências no s3', [
+            { text: 'OK', onPress: () => console.log('OK Pressed') },
+          ]);
     }
   }
   async function sendBackend() {
+    setSpinerStart(true)
     const { id }: any = route.params;
     const folderName = id.toString();
     const folderInfo = await MediaLibrary.getAlbumAsync(folderName);
@@ -174,52 +178,45 @@ export function Register() {
       mediaType: [MediaLibrary.MediaType.photo],
     });
 
-    for (const pictureEvidence of assets) {
-      const evidence64 = await FileSystem.readAsStringAsync(pictureEvidence.uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
-      const location = await sandToS3(pictureEvidence.filename, evidence64)
-     
-      if (pictureEvidence.filename ===  'carga.jpg') {
-        setChargeEvidence({
-          date: new Date(),
-          name: location,
-          location: { lat: coords.carga.lat, lng: coords.carga.lng },
-        })
-      }
-
-      else if (pictureEvidence.filename =='descarga.jpg') {
-        setDischargeEvidence({
-          date: new Date(),
-          name: location,
-          location: { lat: coords.descarga.lat, lng: coords.descarga.lng },
-        })
-      }
-      else {
-        setDocumentEvidence({
-          date: new Date(),
-          name: location,
-          location: { lat: coords.documento.lat, lng: coords.documento.lng },
-        })
-      }
-
-    }
-    // await AsyncStorage.clear()
-    handleFinalized()
+    const locations  = ['carga', 'descarga' , 'documento']
+    locations.map(async (item, indice) =>{
+      const pictureUri = coords[item]
+      const evidence64 = await FileSystem.readAsStringAsync(pictureUri.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+      
+      await sandToS3(item, evidence64)
+      handleFinalized()
+    })
   }
-
-
+  
+  
   async function handleFinalized() {
-    const document = await AsyncStorage.getItem('document');
-    const documentParse = JSON.parse(document as string);
+    if(allLocations.carga == null || allLocations.descarga == null || allLocations.documento == null) {
+     return
+    }
+
+
     const { id }: any = route.params;
-    
+    const document = await AsyncStorage.getItem(id.toString());
+    const async = JSON.parse(document);
     const objctSend = {
-      chargeEvidence,
-      dischargeEvidence,
-      documentEvidence,
-      document: documentParse,
+      chargeEvidence:{
+              date: new Date(),
+              name: allLocations.carga,
+              location: { lat: async['carga'].lat, lng: async['carga'].lng },
+            },
+      dischargeEvidence:{
+              date: new Date(),
+              name: allLocations.descarga,
+              location: { lat: async['descarga'].lat, lng: async['descarga'].lng },
+            },
+      documentEvidence:{
+        date: new Date(),
+        name: allLocations.documento,
+        location: { lat: async['documento'].lat, lng: async['documento'].lng },
+      },
+      document: async.document,
       historicoEstoqueId: id,
       s3: true,
     };
@@ -239,10 +236,12 @@ export function Register() {
       });
       AsyncStorage.removeItem(nameMemory)
       await FileSystem.deleteAsync(`${FileSystem.documentDirectory}${folderName}`, { idempotent: true });
+      setSpinerStart(false)
       Alert.alert('Sucesso', 'Evidências gravadas com sucesso', [
         { text: 'OK', onPress: () => navigation.navigate('Home') },
       ]);
     } catch (error) {
+      setSpinerStart(false)
       Alert.alert('Erro', 'Erro ao salvar evidências', [
         { text: 'OK', onPress: () => console.log('OK Pressed') },
       ]);
@@ -253,16 +252,43 @@ export function Register() {
   async function handleDeleteEvidence(param:string){
     const { id }: any = route.params;
     const nameMemory = JSON.stringify(id)
+    Alert.alert('Deletar evidência', `Deseja deletar a evidência de ${param}`, [
+      { text: 'Cancelar'},
+      { text: 'Deletar', onPress: () => AceptExcluir(param,id,nameMemory) }
+    ]);
+  }
 
-    const deleteEvidence = await AsyncStorage.getItem(nameMemory)
-    const asyncJson = JSON.parse(deleteEvidence)
-    const exclusion = asyncJson[param] = undefined
+  async function AceptExcluir(param, id, nameMemory){
+    const folderInfo = await MediaLibrary.getAlbumAsync(id.toString());
+   
+    const { assets } = await MediaLibrary.getAssetsAsync({
+      album: folderInfo,
+      mediaType: [MediaLibrary.MediaType.photo],
+    });
+    const deleteItem = assets.filter((item) => item.filename == `${param}.jpg`)
+    const deleteEvidence = await AsyncStorage.getItem(nameMemory);
 
-    await FileSystem.deleteAsync('file:///data/user/0/host.exp.exponent/files/142676/carga.jpg');
-    console.log(exclusion)
-    // await AsyncStorage.mergeItem(nameMemory,exclusion)
-    // file:///data/user/0/host.exp.exponent/files/142676/carga.jpg
+   
+    const asyncJson = JSON.parse(deleteEvidence);
 
+    try{
+      await MediaLibrary.deleteAssetsAsync(deleteItem[0]);
+      delete asyncJson[param];
+      await AsyncStorage.setItem(nameMemory, JSON.stringify(asyncJson));
+      if (param == 'carga' ) {
+        setChargeExist(null)
+      }
+      if (param == 'descarga') {
+        setDIschargeExist(null)
+      }
+      if (param == 'documento') {
+        setDocumentExist(null)
+      }
+    }catch{
+      Alert.alert('Erro', 'Erro ao excluir evidência', [
+        { text: 'OK', onPress: () => console.log('OK Pressed') },
+      ]);
+    }
   }
   useFocusEffect(
     useCallback(() => {
@@ -272,6 +298,7 @@ export function Register() {
   );
   return (
     <SafeAreaView style={styles.main}>
+      {spinerStart ? <Spiner showSpiner={spinerStart}/> : null}
       {/* {showMap ?? <MapWithRoute onClose={handleMapa} />} */}
       {see === true ? (
         <View style={styles.centeredView}>
@@ -349,6 +376,7 @@ export function Register() {
         {chargeExist ? (
           <TouchableOpacity style={styles.viewEvidences} onPress={()=>handleDeleteEvidence('carga')}>
             <Text>{chargeExist.name}</Text>
+            <Text style={{color:'grey'}}>Click para excluir</Text>
             <Image source={{ uri: chargeExist.uri }} style={styles.evidence}></Image>
           </TouchableOpacity>
         ) : (
@@ -360,8 +388,9 @@ export function Register() {
           </TouchableOpacity>
         )}
         {dischargeExist ? (
-          <TouchableOpacity style={styles.viewEvidences}>
+          <TouchableOpacity onPress={()=>handleDeleteEvidence('descarga')} style={styles.viewEvidences} >
             <Text>{dischargeExist.name}</Text>
+            <Text style={{color:'grey'}}>Click para excluir</Text>
             <Image source={{ uri: dischargeExist.uri }} style={styles.evidence}></Image>
 
           </TouchableOpacity>
@@ -374,8 +403,9 @@ export function Register() {
           </TouchableOpacity>
         )}
         {documentExist ? (
-          <TouchableOpacity style={styles.viewEvidences}>
+          <TouchableOpacity style={styles.viewEvidences} onPress={()=>handleDeleteEvidence('documento')}>
             <Text>{documentExist.name}</Text>
+            <Text style={{color:'grey'}}>Click para excluir</Text>
             <ImageBackground source={{ uri: documentExist.uri }} style={styles.evidence}></ImageBackground>
           </TouchableOpacity>
         ) : (
@@ -388,12 +418,17 @@ export function Register() {
 
         )}
       </View>
-      <View style={styles.sendEvidencesView}>
-        <TouchableOpacity onPress={sendBackend}>
+        {documentoExist && chargeExist &&dischargeExist &&documentExist?(
+        <TouchableOpacity onPress={sendBackend} style={styles.sendEvidencesView}>
           <Text style={{ color: 'white' }}>Enviar</Text>
         </TouchableOpacity>
-      </View>
 
+        ):(
+          <TouchableOpacity style={styles.sendEvidencesView}>
+          <Text style={{ color: 'white' }}>Adicionar as demais informações</Text>
+        </TouchableOpacity>
+        )}
+          
     </SafeAreaView>
   );
 }

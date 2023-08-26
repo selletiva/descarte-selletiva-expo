@@ -1,6 +1,6 @@
 import axios from 'axios';
 
 const Api = axios.create({
-  baseURL: 'https://bebf-198-17-121-248.ngrok-free.app/check-out',
+  baseURL: 'http://46.101.102.239:3000/check-out',
 });
 export default Api;

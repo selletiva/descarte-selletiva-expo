@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "selletiva-app",
-    "slug": "selletiva-app",
+    "name": "Descarte-selletiva",
+    "slug": "Descarte-selletiva",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,19 +15,28 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "package": "com.steniosousa.Descarteselletiva"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "react-native-vision-camera"
-    ]
+    "extra": {
+      "eas": {
+        "projectId": "32741b3a-7595-4d43-901f-0f79ff07f916"
+      }
+    }
   }
 }

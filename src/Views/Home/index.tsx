@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
+import * as Location from 'expo-location';
 import {
   View,
   Text,
@@ -8,8 +9,10 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  Button,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import * as MediaLibrary from 'expo-media-library';
 
 import { Card } from '../../components/Card';
 import { Spiner } from '../../components/Spiner';
@@ -18,6 +21,7 @@ import { useAuth } from '../../hooks/useAuth';
 import styled from './styled';
 import Api from '../../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Camera } from 'expo-camera';
 
 type historiesProps = {
   id: number;
@@ -26,6 +30,54 @@ export default function Home() {
   const { user, doLogout } = useAuth();
   const [histories, setHistory] = useState<historiesProps[]>([]);
   const navigation = useNavigation();
+  const [hasCameraPermission, setHasCameraPermission] = useState(null);
+  const [hasMediaLibraryPermission, setHasMediaLibraryPermission] = useState(null);
+  
+  useEffect(() => {
+    (async () => {
+      const cameraStatus = await Camera.requestCameraPermissionsAsync();
+      setHasCameraPermission(cameraStatus.status === 'granted');
+
+    })();
+    (async () => {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      setHasMediaLibraryPermission(status === 'granted');
+    })();
+    (async () =>{
+      await Location.requestForegroundPermissionsAsync();
+
+    })()
+  }, []);
+
+
+  async function getPermissionCam(){
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    setHasCameraPermission(status === 'granted');
+  }
+
+
+  if (hasCameraPermission === false) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ textAlign: 'center' }}>We need your permission to show cam</Text>
+        <Button onPress={getPermissionCam} title="Permitir" />
+      </View>
+    );
+  }
+
+  async function getPermission(){
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    setHasMediaLibraryPermission(status === 'granted');
+  }
+
+  if (hasMediaLibraryPermission === false) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ textAlign: 'center' }}>We need your permission to save image</Text>
+        <Button onPress={getPermission} title="Permitir" />
+      </View>
+    );
+  }
   
   function logout() {
     doLogout();
@@ -49,6 +101,7 @@ export default function Home() {
       });
       setHistory(data);
     } catch (error) {
+      console.log(error)
       Alert.alert('Erro', 'Erro ao recuperar solicitações', [
         { text: 'OK', onPress: () => console.log('OK Pressed') },
       ]);
@@ -123,5 +176,9 @@ const styles = StyleSheet.create({
   textDescription: {
     fontWeight: '500',
     color: 'black',
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
   },
 });
