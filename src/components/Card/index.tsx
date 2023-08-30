@@ -4,11 +4,15 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native';
 
 import { StackAuthenticatedParamList } from '../../routes';
+import { useEffect } from 'react';
 export function Card({ element }: any) {
   const navigation =
     useNavigation<NativeStackNavigationProp<StackAuthenticatedParamList>>();
 
-  function makePhoto() {
+    useEffect(() =>{
+    },[])
+    
+    function makePhoto() {
     navigation.navigate('Register', { id: element.id });
   }
   return (
@@ -17,20 +21,20 @@ export function Card({ element }: any) {
         <TouchableOpacity onPress={makePhoto}>
           <View style={styles.container}>
             <Text style={styles.title}>
-              Tipo de resíduo: {element.type.nome}
+              Tipo de resíduo: {element.type.nome ? element.type.nome : "Sem tipo de resíduo"}
             </Text>
             <Text style={styles.title}>
-              Destinatário: {element.destination.nome}
+              Destinatário: {element.destination.nome ? element.destination.nome : "sem destinatário"}
             </Text>
             <Text style={styles.title}>
               Quantidade da operação: {element.quantity} {element.unitLabel}
             </Text>
             <View style={styles.dateAndCNumberDoc}>
               <Text style={styles.text}>
-                Bairro: {element.destination.address.district}
+                Bairro: {element.destination.address.district ? element.destination.address.district : "Sem bairro"}
               </Text>
               <Text style={styles.text}>
-                Logradouro: {element.destination.address.street}
+                Logradouro: {element.destination.address.street ? element.destination.address.street : "Sem Logradouro"}
               </Text>
             </View>
           </View>

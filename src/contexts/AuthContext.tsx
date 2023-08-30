@@ -20,7 +20,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ModalAlert from '../components/Modal';
 
-export const AuthContext = createContext({} as AuthProviderReturn);
+export const AuthContext =  createContext({} as AuthProviderReturn);
 
 type AuthProviderProps = {
   children: ReactNode;
@@ -61,8 +61,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
 
       await AsyncStorage.setItem('user', JSON.stringify(userData));
     } catch (e: any) {
-      setTextModal('Códico com Erro');
-      setActive(oldState => !oldState);
+      setTextModal('Erro ao fazer login');
+      setActive(!active);
     }
   }, []);
 

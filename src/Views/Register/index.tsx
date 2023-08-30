@@ -28,6 +28,8 @@ import { StackAuthenticatedParamList } from '../../routes';
 import Api from '../../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spiner } from '../../components/Spiner';
+import Spinner from 'react-native-loading-spinner-overlay';
+import Map from '../../components/maps';
 
 type returnDatas = {
   id: Number;
@@ -48,15 +50,13 @@ export function Register() {
   const [arrayTipoDocumento, setArrayTipoDocumento] = useState<returnDatas[]>(
     [],
   );
-
-  const [spinerStart, setSpinerStart] = useState(false)
-  const allLocations ={carga:null,descarga:null,documento:null}
-const [documentoExist,setDocumentoExist] = useState(null)
+  const [isLoading, setIsLoading] = useState(false);
+  const allLocations = { carga: null, descarga: null, documento: null }
+  const [documentoExist, setDocumentoExist] = useState(null)
 
   const route = useRoute();
 
-  const navigation =
-    useNavigation<NativeStackNavigationProp<StackAuthenticatedParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<StackAuthenticatedParamList>>();
 
   async function handleLocationToCam(type) {
     const { id }: any = route.params;
@@ -158,17 +158,22 @@ const [documentoExist,setDocumentoExist] = useState(null)
       Body: decodedBuffer,
     };
     try {
-      const {Location} = await s3.upload(datas).promise();
-     allLocations[name]=Location
+      const { Location } = await s3.upload(datas).promise();
+      allLocations[name] = Location
     } catch (error) {
       Alert.alert('Erro', 'Erro ao salvar evidências no s3', [
-            { text: 'OK', onPress: () => console.log('OK Pressed') },
-          ]);
+        { text: 'OK', onPress: () => console.log('OK Pressed') },
+      ]);
     }
   }
   async function sendBackend() {
-    setSpinerStart(true)
-    if(spinerStart) return
+    if(!documentoExist || !chargeExist || !dischargeExist || !documentExist ){
+      Alert.alert('Conflito', 'Cadastrar as demais informações', [
+        { text: 'OK'},
+      ]);
+      return
+    }
+    setIsLoading(true)
     const { id }: any = route.params;
     const folderName = id.toString();
     const folderInfo = await MediaLibrary.getAlbumAsync(folderName);
@@ -179,40 +184,35 @@ const [documentoExist,setDocumentoExist] = useState(null)
       mediaType: [MediaLibrary.MediaType.photo],
     });
 
-    const locations  = ['carga', 'descarga' , 'documento']
-    locations.map(async (item, indice) =>{
+    const locations = ['carga', 'descarga', 'documento']
+    locations.map(async (item, indice) => {
       const pictureUri = coords[item]
       const evidence64 = await FileSystem.readAsStringAsync(pictureUri.uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-      
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
       await sandToS3(item, evidence64)
       handleFinalized()
     })
   }
-  
-  
+
+
   async function handleFinalized() {
-    if(allLocations.carga == null || allLocations.descarga == null || allLocations.documento == null) {
-     return
-    }
-
-
     const { id }: any = route.params;
     const document = await AsyncStorage.getItem(id.toString());
     const async = JSON.parse(document);
     const objctSend = {
-      chargeEvidence:{
-              date: new Date(),
-              name: allLocations.carga,
-              location: { lat: async['carga'].lat, lng: async['carga'].lng },
-            },
-      dischargeEvidence:{
-              date: new Date(),
-              name: allLocations.descarga,
-              location: { lat: async['descarga'].lat, lng: async['descarga'].lng },
-            },
-      documentEvidence:{
+      chargeEvidence: {
+        date: new Date(),
+        name: allLocations.carga,
+        location: { lat: async['carga'].lat, lng: async['carga'].lng },
+      },
+      dischargeEvidence: {
+        date: new Date(),
+        name: allLocations.descarga,
+        location: { lat: async['descarga'].lat, lng: async['descarga'].lng },
+      },
+      documentEvidence: {
         date: new Date(),
         name: allLocations.documento,
         location: { lat: async['documento'].lat, lng: async['documento'].lng },
@@ -222,7 +222,7 @@ const [documentoExist,setDocumentoExist] = useState(null)
       s3: true,
     };
 
-  await uploadDatas(objctSend)
+    await uploadDatas(objctSend)
   }
 
   async function uploadDatas(objctSend: any) {
@@ -237,12 +237,14 @@ const [documentoExist,setDocumentoExist] = useState(null)
       });
       AsyncStorage.removeItem(nameMemory)
       await FileSystem.deleteAsync(`${FileSystem.documentDirectory}${folderName}`, { idempotent: true });
-      setSpinerStart(false)
+      setIsLoading(false)
+
       Alert.alert('Sucesso', 'Evidências gravadas com sucesso', [
         { text: 'OK', onPress: () => navigation.navigate('Home') },
       ]);
     } catch (error) {
-      setSpinerStart(false)
+      setIsLoading(false)
+
       Alert.alert('Erro', 'Erro ao salvar evidências', [
         { text: 'OK', onPress: () => console.log('OK Pressed') },
       ]);
@@ -250,18 +252,18 @@ const [documentoExist,setDocumentoExist] = useState(null)
 
   }
 
-  async function handleDeleteEvidence(param:string){
+  async function handleDeleteEvidence(param: string) {
     const { id }: any = route.params;
     const nameMemory = JSON.stringify(id)
     Alert.alert('Deletar evidência', `Deseja deletar a evidência de ${param}`, [
-      { text: 'Cancelar'},
-      { text: 'Deletar', onPress: () => AceptExcluir(param,id,nameMemory) }
+      { text: 'Cancelar' },
+      { text: 'Deletar', onPress: () => AceptExcluir(param, id, nameMemory) }
     ]);
   }
 
-  async function AceptExcluir(param, id, nameMemory){
+  async function AceptExcluir(param, id, nameMemory) {
     const folderInfo = await MediaLibrary.getAlbumAsync(id.toString());
-   
+
     const { assets } = await MediaLibrary.getAssetsAsync({
       album: folderInfo,
       mediaType: [MediaLibrary.MediaType.photo],
@@ -269,14 +271,14 @@ const [documentoExist,setDocumentoExist] = useState(null)
     const deleteItem = assets.filter((item) => item.filename == `${param}.jpg`)
     const deleteEvidence = await AsyncStorage.getItem(nameMemory);
 
-   
+
     const asyncJson = JSON.parse(deleteEvidence);
 
-    try{
+    try {
       await MediaLibrary.deleteAssetsAsync(deleteItem[0]);
       delete asyncJson[param];
       await AsyncStorage.setItem(nameMemory, JSON.stringify(asyncJson));
-      if (param == 'carga' ) {
+      if (param == 'carga') {
         setChargeExist(null)
       }
       if (param == 'descarga') {
@@ -285,7 +287,7 @@ const [documentoExist,setDocumentoExist] = useState(null)
       if (param == 'documento') {
         setDocumentExist(null)
       }
-    }catch{
+    } catch {
       Alert.alert('Erro', 'Erro ao excluir evidência', [
         { text: 'OK', onPress: () => console.log('OK Pressed') },
       ]);
@@ -297,141 +299,140 @@ const [documentoExist,setDocumentoExist] = useState(null)
       getDatas();
     }, [])
   );
-  return (
-    <SafeAreaView style={styles.main}>
-      {spinerStart ? <Spiner showSpiner={spinerStart}/> : null}
-      {/* {showMap ?? <MapWithRoute onClose={handleMapa} />} */}
-      {see === true ? (
-        <View style={styles.centeredView}>
-          <Modal animationType="slide" transparent={true} visible={see}>
-            <View style={styles.centeredView}>
-              <View style={styles.modalView}>
-                <Text style={styles.modalText}>
-                  Por favor, preencha os campos vazios!
-                </Text>
-                <Pressable
-                  style={[styles.button, styles.buttonClose]}
-                  onPress={() => setActive()}>
-                  <Text style={styles.textStyle}>Ok!</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
-        </View>
-      ) : (
-        <></>
-      )}
-      <View style={styles.selectOption}>
-        <Text style={styles.text}>Tipo de Documento: </Text>
-        <Picker
-          style={styles.padron}
-          onValueChange={itemValue => setDocumento(itemValue)}
-          selectedValue={documento}>
-          <Picker.Item label={documento} value={documento} />
-          {arrayTipoDocumento.map(options => {
-            return (
-              <Picker.Item
-                key={options.id.toString()}
-                label={options.name}
-                value={options.id}
-              />
-            );
-          })}
-        </Picker>
-        <View style={styles.flexView}>
-          <View>
-            <Text style={styles.text}>Peso: </Text>
-            <TextInput
-              keyboardType="numeric"
-              value={peso}
-              style={styles.input}
-              onChangeText={pesoDoc => setPeso(pesoDoc)}
-            />
-          </View>
-          <View style={styles.teste}>
-            <Text style={styles.text}>Unidade: </Text>
-            <Picker
-              onValueChange={itemValue => setUnidade(itemValue)}
-              selectedValue={unidade}>
-              <Picker.Item label={'Selecionar'} value={'Selecionar'} />
-              <Picker.Item label={'UN'} value={'UN'} />
-              <Picker.Item label={'L'} value={'L'} />
-              <Picker.Item label={'Kg'} value={'KG'} />
-            </Picker>
-          </View>
-        </View>
-      </View>
+  // return (
+  //   <SafeAreaView style={styles.main}>
+  //     <Spinner
+  //       visible={isLoading}
+  //       textContent={'Enviando evidências...'}
+  //       textStyle={{ color: '#FFF' }}
+  //     />
+  //     {/* {showMap ?? <MapWithRoute onClose={handleMapa} />} */}
+  //     {see === true ? (
+  //       <View style={styles.centeredView}>
+  //         <Modal animationType="slide" transparent={true} visible={see}>
+  //           <View style={styles.centeredView}>
+  //             <View style={styles.modalView}>
+  //               <Text style={styles.modalText}>
+  //                 Por favor, preencha os campos vazios!
+  //               </Text>
+  //               <Pressable
+  //                 style={[styles.button, styles.buttonClose]}
+  //                 onPress={() => setActive()}>
+  //                 <Text style={styles.textStyle}>Ok!</Text>
+  //               </Pressable>
+  //             </View>
+  //           </View>
+  //         </Modal>
+  //       </View>
+  //     ) : (
+  //       <></>
+  //     )}
+  //     <View style={styles.selectOption}>
+  //       <Text style={styles.text}>Tipo de Documento: </Text>
+  //       <Picker
+  //         style={styles.padron}
+  //         onValueChange={itemValue => setDocumento(itemValue)}
+  //         selectedValue={documento}>
+  //         <Picker.Item label={documento} value={documento} />
+  //         {arrayTipoDocumento.map(options => {
+  //           return (
+  //             <Picker.Item
+  //               key={options.id.toString()}
+  //               label={options.name}
+  //               value={options.id}
+  //             />
+  //           );
+  //         })}
+  //       </Picker>
+  //       <View style={styles.flexView}>
+  //         <View>
+  //           <Text style={styles.text}>Peso: </Text>
+  //           <TextInput
+  //             keyboardType="numeric"
+  //             value={peso}
+  //             style={styles.input}
+  //             onChangeText={pesoDoc => setPeso(pesoDoc)}
+  //           />
+  //         </View>
+  //         <View style={styles.teste}>
+  //           <Text style={styles.text}>Unidade: </Text>
+  //           <Picker
+  //             onValueChange={itemValue => setUnidade(itemValue)}
+  //             selectedValue={unidade}>
+  //             <Picker.Item label={'Selecionar'} value={'Selecionar'} />
+  //             <Picker.Item label={'UN'} value={'UN'} />
+  //             <Picker.Item label={'L'} value={'L'} />
+  //             <Picker.Item label={'Kg'} value={'KG'} />
+  //           </Picker>
+  //         </View>
+  //       </View>
+  //     </View>
 
-      <Text style={styles.text}>Nº documento: </Text>
-      <TextInput
-        value={N_Documento}
-        keyboardType="numeric"
-        style={styles.input}
-        onChangeText={numeroDoc => setN_Documento(numeroDoc)}
-      />
-      <TouchableOpacity onPress={handleSaveDoc} style={styles.saveDoc}>
-        <Text style={{ color: 'white' }}>{nameSave}</Text>
-      </TouchableOpacity>
+  //     <Text style={styles.text}>Nº documento: </Text>
+  //     <TextInput
+  //       value={N_Documento}
+  //       keyboardType="numeric"
+  //       style={styles.input}
+  //       onChangeText={numeroDoc => setN_Documento(numeroDoc)}
+  //     />
+  //     <TouchableOpacity onPress={handleSaveDoc} style={styles.saveDoc}>
+  //       <Text style={{ color: 'white' }}>{nameSave}</Text>
+  //     </TouchableOpacity>
 
-      <View style={styles.toCam}>
-        {chargeExist ? (
-          <TouchableOpacity style={styles.viewEvidences} onPress={()=>handleDeleteEvidence('carga')}>
-            <Text>{chargeExist.name}</Text>
-            <Text style={{color:'grey'}}>Click para excluir</Text>
-            <Image source={{ uri: chargeExist.uri }} style={styles.evidence}></Image>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.buttonCam}
-            onPress={() => handleLocationToCam('carga')}>
-            <Text style={styles.text}>Carga</Text>
-            <Icon name="camera" size={30} color="#370acd" />
-          </TouchableOpacity>
-        )}
-        {dischargeExist ? (
-          <TouchableOpacity onPress={()=>handleDeleteEvidence('descarga')} style={styles.viewEvidences} >
-            <Text>{dischargeExist.name}</Text>
-            <Text style={{color:'grey'}}>Click para excluir</Text>
-            <Image source={{ uri: dischargeExist.uri }} style={styles.evidence}></Image>
+  //     <View style={styles.toCam}>
+  //       {chargeExist ? (
+  //         <TouchableOpacity style={styles.viewEvidences} onPress={() => handleDeleteEvidence('carga')}>
+  //           <Text>{chargeExist.name}</Text>
+  //           <Text style={{ color: 'grey' }}>Click para excluir</Text>
+  //           <Image source={{ uri: chargeExist.uri }} style={styles.evidence}></Image>
+  //         </TouchableOpacity>
+  //       ) : (
+  //         <TouchableOpacity
+  //           style={styles.buttonCam}
+  //           onPress={() => handleLocationToCam('carga')}>
+  //           <Text style={styles.text}>Carga</Text>
+  //           <Icon name="camera" size={30} color="#370acd" />
+  //         </TouchableOpacity>
+  //       )}
+  //       {dischargeExist ? (
+  //         <TouchableOpacity onPress={() => handleDeleteEvidence('descarga')} style={styles.viewEvidences} >
+  //           <Text>{dischargeExist.name}</Text>
+  //           <Text style={{ color: 'grey' }}>Click para excluir</Text>
+  //           <Image source={{ uri: dischargeExist.uri }} style={styles.evidence}></Image>
 
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.buttonCam}
-            onPress={() => handleLocationToCam('descarga')}>
-            <Text style={styles.text}>Descarga</Text>
-            <Icon name="camera" size={30} color="#370acd" />
-          </TouchableOpacity>
-        )}
-        {documentExist ? (
-          <TouchableOpacity style={styles.viewEvidences} onPress={()=>handleDeleteEvidence('documento')}>
-            <Text>{documentExist.name}</Text>
-            <Text style={{color:'grey'}}>Click para excluir</Text>
-            <ImageBackground source={{ uri: documentExist.uri }} style={styles.evidence}></ImageBackground>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.buttonCam}
-            onPress={() => handleLocationToCam('documento')}>
-            <Text style={styles.text}>Documento</Text>
-            <Icon name="camera" size={30} color="#370acd" />
-          </TouchableOpacity>
+  //         </TouchableOpacity>
+  //       ) : (
+  //         <TouchableOpacity
+  //           style={styles.buttonCam}
+  //           onPress={() => handleLocationToCam('descarga')}>
+  //           <Text style={styles.text}>Descarga</Text>
+  //           <Icon name="camera" size={30} color="#370acd" />
+  //         </TouchableOpacity>
+  //       )}
+  //       {documentExist ? (
+  //         <TouchableOpacity style={styles.viewEvidences} onPress={() => handleDeleteEvidence('documento')}>
+  //           <Text>{documentExist.name}</Text>
+  //           <Text style={{ color: 'grey' }}>Click para excluir</Text>
+  //           <ImageBackground source={{ uri: documentExist.uri }} style={styles.evidence}></ImageBackground>
+  //         </TouchableOpacity>
+  //       ) : (
+  //         <TouchableOpacity
+  //           style={styles.buttonCam}
+  //           onPress={() => handleLocationToCam('documento')}>
+  //           <Text style={styles.text}>Documento</Text>
+  //           <Icon name="camera" size={30} color="#370acd" />
+  //         </TouchableOpacity>
 
-        )}
-      </View>
-        {documentoExist && chargeExist && dischargeExist &&documentExist?(
-        <TouchableOpacity onPress={sendBackend} style={styles.sendEvidencesView}>
-          <Text style={{ color: 'white' }}>Enviar</Text>
-        </TouchableOpacity>
-
-        ):(
-          <TouchableOpacity style={styles.sendEvidencesView}>
-          <Text style={{ color: 'white' }}>Adicionar as demais informações</Text>
-        </TouchableOpacity>
-        )}
-          
-    </SafeAreaView>
-  );
+  //       )}
+  //     </View>
+  //       <TouchableOpacity onPress={sendBackend} style={styles.sendEvidencesView}>
+  //         <Text style={{ color: 'white' }}>Enviar</Text>
+  //       </TouchableOpacity>
+  //   </SafeAreaView>
+  // );
+    return(
+      <Map/>
+    )
 }
 
 const styles = StyleSheet.create({
@@ -541,7 +542,7 @@ const styles = StyleSheet.create({
 
   },
   sendEvidencesView: {
-    backgroundColor: 'blue',
+    backgroundColor: '#008000',
     height: 30,
     justifyContent: 'center',
     borderRadius: 5,

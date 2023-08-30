@@ -1,135 +1,110 @@
-import { useEffect, useRef, useState } from "react";
-import { Alert, Button, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { useRef, useState } from "react";
+import { Alert, StyleSheet, Text, View } from "react-native"
 import { Camera, CameraType } from 'expo-camera';
-import * as MediaLibrary from 'expo-media-library';
 import { useNavigation, useRoute } from "@react-navigation/native";
-import * as FileSystem from 'expo-file-system';
 import React from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from 'expo-location';
-import { Spiner } from "../Spiner";
+import { ButtonPicture, ButtonRePicture, Buttons, ImagemPicture, ViewPicture } from "./styled";
+import { Ionicons } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
+import Spinner from 'react-native-loading-spinner-overlay';
 
 
 export default function Cam() {
   const route = useRoute();
-  const [type, setType] = useState(CameraType.back);
   const [captured, setCapturedImage] = useState(null)
-
   const cameraRef = useRef<Camera>(null);
   const navigation = useNavigation();
-
-  const [spinerStart, setSpinerStart] = useState(false)
- 
-
-
- 
-
+  const [isLoading, setIsLoading] = useState(false);
+  const { id, type }: any = route.params;
 
   async function capture() {
-    if (cameraRef.current) {
-      try {
-        const { uri } = await cameraRef.current.takePictureAsync();
-        setCapturedImage(uri);
-      } catch (error) {
-        console.error('Erro ao tirar foto:', error);
-      }
+    try {
+      const { uri } = await cameraRef.current.takePictureAsync();
+      setCapturedImage(uri);
+    } catch (error) {
+      Alert.alert('Erro', "Erro ao capturar evidência", [
+        { text: 'OK' }
+      ])
     }
   };
 
   async function saveAsync(nameImage, asset) {
-   
-    const { id }: any = route.params;
     const nameMemory = JSON.stringify(id)
     let currentLocation = await Location.getCurrentPositionAsync({});
-    currentLocation.coords.latitude
 
     const saveEvidence = {
-      [nameImage]:{
-        uri:asset,
-        lat:currentLocation.coords.latitude,
-        lng:currentLocation.coords.longitude
+      [nameImage]: {
+        uri: asset,
+        lat: currentLocation.coords.latitude,
+        lng: currentLocation.coords.longitude
       }
     }
 
     try {
       await AsyncStorage.mergeItem(nameMemory, JSON.stringify(saveEvidence))
+      setIsLoading(false)
       Alert.alert('Sucess', 'Salvo com sucesso', [
         { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
       ]);
     } catch {
       await AsyncStorage.setItem(nameMemory, JSON.stringify(saveEvidence))
+      setIsLoading(false)
       Alert.alert('Sucess', 'Salvo com sucesso', [
         { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
       ]);
     }
-
-    setSpinerStart(false)
+    setIsLoading(false)
 
   }
 
   async function savePicture() {
-    console.log(captured)
-    setSpinerStart(true)
-    const { id }: any = route.params;
-    const { type }: any = route.params;
+    setIsLoading(true)
     const nameImage = `${type.toString()}`;
-    const folderName = id.toString();
-
-    try {
-      const folderInfo = await MediaLibrary.getAlbumAsync(folderName);
-      const fileName = `${id}/${nameImage}.jpg`;
-      const fileUri = FileSystem.documentDirectory + fileName;
-
-      await FileSystem.copyAsync({
-        from: captured,
-        to: fileUri,
-      });
-      if (!folderInfo) {
-        const asset = await MediaLibrary.createAssetAsync(fileUri);
-        await MediaLibrary.createAlbumAsync(folderName, asset, true);
-        saveAsync(nameImage, fileUri);
-        return
-      }
-     
-      const { assets } = await MediaLibrary.getAssetsAsync({
-        album: folderInfo,
-        mediaType: [MediaLibrary.MediaType.photo],
-      });
-
-      const exist = assets.find((item) => item.filename === `${nameImage}.jpg`);
-      if (exist) return;
-
-      const asset = await MediaLibrary.createAssetAsync(fileUri);
-      await MediaLibrary.addAssetsToAlbumAsync([asset], folderInfo, true);
-
-      saveAsync(nameImage, fileUri);
-    }
-    catch (error) {
-      console.error('Error saving picture:', error);
-    }
+    saveAsync(nameImage, captured);
   }
 
+  function toggleCameraType() {
+    setType(current => (current === CameraType.back ? CameraType.front : CameraType.back));
+  }
 
-
-
+  async function trashImage() {
+    setCapturedImage(null)
+  }
 
   return (
-    <Camera style={styles.camera} type={type} ref={cameraRef}>
-        {spinerStart ? <Spiner showSpiner={spinerStart}/> : null}
-      <View style={styles.buttonContainer}>
-        {captured ? (
-          <TouchableOpacity onPress={savePicture}>
-            <Image source={{ uri: captured }} style={styles.evidence}></Image>
-            <Text style={styles.text}>SALVAR</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity onPress={capture}>
-            <Text style={styles.text}>TIRAR</Text>
-          </TouchableOpacity>
-
-        )}
-      </View>
-    </Camera>
+    <View style={styles.container}>
+      {captured && (
+        <ViewPicture >
+          <ImagemPicture source={{ uri: captured }} />
+          <ButtonRePicture >
+            <ButtonPicture onPress={trashImage}>
+              <Feather name="trash" size={30} color="white" />
+            </ButtonPicture>
+            <ButtonPicture onPress={() => savePicture()}>
+              <AntDesign name="save" size={40} color="white" />
+            </ButtonPicture>
+            <Text style={styles.text}></Text>
+          </ButtonRePicture>
+        </ViewPicture>
+      )}
+      <Camera style={styles.camera} type={type} ref={cameraRef}>
+        <Buttons >
+        <Text style={styles.text}></Text>
+          <ButtonPicture onPress={capture}>
+            <Ionicons name="camera-outline" size={40} color="white" />
+          </ButtonPicture>
+          <Text style={styles.text}></Text>
+        </Buttons>
+      </Camera>
+      <Spinner
+        visible={isLoading}
+        textContent={'Carregando...'}
+        textStyle={{ color: '#FFF' }}
+      />
+    </View >
   )
 }
 
@@ -142,21 +117,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   buttonContainer: {
+    flex: 1,
     flexDirection: 'row',
-    bottom: 100,
+    backgroundColor: 'transparent',
+    margin: 64,
+  },
+  button: {
+    flex: 1,
+    alignSelf: 'flex-end',
     alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-    width: '100%'
   },
   text: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
-    alignSelf:'center'
   },
-  evidence:{
-    height:600,
-    width:400
+  previewContainer: {
+    height: '50%'
+  },
+  previewImage: {
+    height: '50%'
   }
 });
+

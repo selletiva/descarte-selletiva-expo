@@ -22,6 +22,7 @@ import styled from './styled';
 import Api from '../../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera } from 'expo-camera';
+import Spinner from 'react-native-loading-spinner-overlay';
 
 type historiesProps = {
   id: number;
@@ -32,6 +33,7 @@ export default function Home() {
   const navigation = useNavigation();
   const [hasCameraPermission, setHasCameraPermission] = useState(null);
   const [hasMediaLibraryPermission, setHasMediaLibraryPermission] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     (async () => {
@@ -45,7 +47,6 @@ export default function Home() {
     })();
     (async () =>{
       await Location.requestForegroundPermissionsAsync();
-
     })()
   }, []);
 
@@ -99,12 +100,10 @@ export default function Home() {
         },
         params: { onlyPendingDestination: 'true' },
       });
+      setIsLoading(false)
       setHistory(data);
     } catch (error) {
-      console.log(error)
-      Alert.alert('Erro', 'Erro ao recuperar solicitações', [
-        { text: 'OK', onPress: () => console.log('OK Pressed') },
-      ]);
+      setIsLoading(false)
     }
 
     const unsubscribe = navigation.addListener('focus', () => {
@@ -125,6 +124,11 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styled.container}>
+      <Spinner
+        visible={isLoading}
+        textContent={'Buscando solicitações...'}
+        textStyle={{ color: '#FFF' }}
+      />
       <Text>Version:1.0.2</Text>
       <TouchableOpacity style={styled.signOut} onPress={logout}>
         <Icon name="sign-out" size={30} color="#000" />
@@ -135,7 +139,7 @@ export default function Home() {
             <Icon name="user" size={30} color="#507EA6" />
             <Text style={styles.textBold}>
               <Text style={styles.textDescription}>Usuário: </Text>
-              {user.nome}
+              {user.nome || "Usuário"}
             </Text>
           </View>
           <View style={styled.infoUser}>
