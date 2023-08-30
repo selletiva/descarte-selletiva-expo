@@ -19,6 +19,7 @@ import {
 } from '../routes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ModalAlert from '../components/Modal';
+import { Alert } from 'react-native';
 
 export const AuthContext =  createContext({} as AuthProviderReturn);
 
@@ -59,9 +60,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
       setUser(userData);
       setIsAuthenticated(true);
 
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      await AsyncStorage.mergeItem('user', JSON.stringify(userData));
     } catch (e: any) {
-      setTextModal('Erro ao fazer login');
+      setTextModal(e.message);
       setActive(!active);
     }
   }, []);
@@ -69,7 +70,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
   const doLogout = useCallback(async () => {
     setUser({});
     setIsAuthenticated(false);
-    await AsyncStorage.clear();
+    await AsyncStorage.mergeItem('user', '');
   }, []);
 
   const redirectUser = useCallback(() => {

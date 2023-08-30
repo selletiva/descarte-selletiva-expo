@@ -299,140 +299,138 @@ export function Register() {
       getDatas();
     }, [])
   );
-  // return (
-  //   <SafeAreaView style={styles.main}>
-  //     <Spinner
-  //       visible={isLoading}
-  //       textContent={'Enviando evidências...'}
-  //       textStyle={{ color: '#FFF' }}
-  //     />
-  //     {/* {showMap ?? <MapWithRoute onClose={handleMapa} />} */}
-  //     {see === true ? (
-  //       <View style={styles.centeredView}>
-  //         <Modal animationType="slide" transparent={true} visible={see}>
-  //           <View style={styles.centeredView}>
-  //             <View style={styles.modalView}>
-  //               <Text style={styles.modalText}>
-  //                 Por favor, preencha os campos vazios!
-  //               </Text>
-  //               <Pressable
-  //                 style={[styles.button, styles.buttonClose]}
-  //                 onPress={() => setActive()}>
-  //                 <Text style={styles.textStyle}>Ok!</Text>
-  //               </Pressable>
-  //             </View>
-  //           </View>
-  //         </Modal>
-  //       </View>
-  //     ) : (
-  //       <></>
-  //     )}
-  //     <View style={styles.selectOption}>
-  //       <Text style={styles.text}>Tipo de Documento: </Text>
-  //       <Picker
-  //         style={styles.padron}
-  //         onValueChange={itemValue => setDocumento(itemValue)}
-  //         selectedValue={documento}>
-  //         <Picker.Item label={documento} value={documento} />
-  //         {arrayTipoDocumento.map(options => {
-  //           return (
-  //             <Picker.Item
-  //               key={options.id.toString()}
-  //               label={options.name}
-  //               value={options.id}
-  //             />
-  //           );
-  //         })}
-  //       </Picker>
-  //       <View style={styles.flexView}>
-  //         <View>
-  //           <Text style={styles.text}>Peso: </Text>
-  //           <TextInput
-  //             keyboardType="numeric"
-  //             value={peso}
-  //             style={styles.input}
-  //             onChangeText={pesoDoc => setPeso(pesoDoc)}
-  //           />
-  //         </View>
-  //         <View style={styles.teste}>
-  //           <Text style={styles.text}>Unidade: </Text>
-  //           <Picker
-  //             onValueChange={itemValue => setUnidade(itemValue)}
-  //             selectedValue={unidade}>
-  //             <Picker.Item label={'Selecionar'} value={'Selecionar'} />
-  //             <Picker.Item label={'UN'} value={'UN'} />
-  //             <Picker.Item label={'L'} value={'L'} />
-  //             <Picker.Item label={'Kg'} value={'KG'} />
-  //           </Picker>
-  //         </View>
-  //       </View>
-  //     </View>
+  return (
+    <SafeAreaView style={styles.main}>
+      <Spinner
+        visible={isLoading}
+        textContent={'Enviando evidências...'}
+        textStyle={{ color: '#FFF' }}
+      />
+      {/* {showMap ?? <MapWithRoute onClose={handleMapa} />} */}
+      {see === true ? (
+        <View style={styles.centeredView}>
+          <Modal animationType="slide" transparent={true} visible={see}>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView}>
+                <Text style={styles.modalText}>
+                  Por favor, preencha os campos vazios!
+                </Text>
+                <Pressable
+                  style={[styles.button, styles.buttonClose]}
+                  onPress={() => setActive()}>
+                  <Text style={styles.textStyle}>Ok!</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+        </View>
+      ) : (
+        <></>
+      )}
+      <View style={styles.selectOption}>
+        <Text style={styles.text}>Tipo de Documento: </Text>
+        <Picker
+          style={styles.padron}
+          onValueChange={itemValue => setDocumento(itemValue)}
+          selectedValue={documento}>
+          <Picker.Item label={documento} value={documento} />
+          {arrayTipoDocumento.map(options => {
+            return (
+              <Picker.Item
+                key={options.id.toString()}
+                label={options.name}
+                value={options.id}
+              />
+            );
+          })}
+        </Picker>
+        <View style={styles.flexView}>
+          <View>
+            <Text style={styles.text}>Peso: </Text>
+            <TextInput
+              keyboardType="numeric"
+              value={peso}
+              style={styles.input}
+              onChangeText={pesoDoc => setPeso(pesoDoc)}
+            />
+          </View>
+          <View style={styles.teste}>
+            <Text style={styles.text}>Unidade: </Text>
+            <Picker
+              onValueChange={itemValue => setUnidade(itemValue)}
+              selectedValue={unidade}>
+              <Picker.Item label={'Selecionar'} value={'Selecionar'} />
+              <Picker.Item label={'UN'} value={'UN'} />
+              <Picker.Item label={'L'} value={'L'} />
+              <Picker.Item label={'Kg'} value={'KG'} />
+            </Picker>
+          </View>
+        </View>
+      </View>
 
-  //     <Text style={styles.text}>Nº documento: </Text>
-  //     <TextInput
-  //       value={N_Documento}
-  //       keyboardType="numeric"
-  //       style={styles.input}
-  //       onChangeText={numeroDoc => setN_Documento(numeroDoc)}
-  //     />
-  //     <TouchableOpacity onPress={handleSaveDoc} style={styles.saveDoc}>
-  //       <Text style={{ color: 'white' }}>{nameSave}</Text>
-  //     </TouchableOpacity>
+      <Text style={styles.text}>Nº documento: </Text>
+      <TextInput
+        value={N_Documento}
+        keyboardType="numeric"
+        style={styles.input}
+        onChangeText={numeroDoc => setN_Documento(numeroDoc)}
+      />
+      <TouchableOpacity onPress={handleSaveDoc} style={styles.saveDoc}>
+        <Text style={{ color: 'white' }}>{nameSave}</Text>
+      </TouchableOpacity>
 
-  //     <View style={styles.toCam}>
-  //       {chargeExist ? (
-  //         <TouchableOpacity style={styles.viewEvidences} onPress={() => handleDeleteEvidence('carga')}>
-  //           <Text>{chargeExist.name}</Text>
-  //           <Text style={{ color: 'grey' }}>Click para excluir</Text>
-  //           <Image source={{ uri: chargeExist.uri }} style={styles.evidence}></Image>
-  //         </TouchableOpacity>
-  //       ) : (
-  //         <TouchableOpacity
-  //           style={styles.buttonCam}
-  //           onPress={() => handleLocationToCam('carga')}>
-  //           <Text style={styles.text}>Carga</Text>
-  //           <Icon name="camera" size={30} color="#370acd" />
-  //         </TouchableOpacity>
-  //       )}
-  //       {dischargeExist ? (
-  //         <TouchableOpacity onPress={() => handleDeleteEvidence('descarga')} style={styles.viewEvidences} >
-  //           <Text>{dischargeExist.name}</Text>
-  //           <Text style={{ color: 'grey' }}>Click para excluir</Text>
-  //           <Image source={{ uri: dischargeExist.uri }} style={styles.evidence}></Image>
+      <View style={styles.toCam}>
+        {chargeExist ? (
+          <TouchableOpacity style={styles.viewEvidences} onPress={() => handleDeleteEvidence('carga')}>
+            <Text>{chargeExist.name}</Text>
+            <Text style={{ color: 'grey' }}>Click para excluir</Text>
+            <Image source={{ uri: chargeExist.uri }} style={styles.evidence}></Image>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.buttonCam}
+            onPress={() => handleLocationToCam('carga')}>
+            <Text style={styles.text}>Carga</Text>
+            <Icon name="camera" size={30} color="#370acd" />
+          </TouchableOpacity>
+        )}
+        {dischargeExist ? (
+          <TouchableOpacity onPress={() => handleDeleteEvidence('descarga')} style={styles.viewEvidences} >
+            <Text>{dischargeExist.name}</Text>
+            <Text style={{ color: 'grey' }}>Click para excluir</Text>
+            <Image source={{ uri: dischargeExist.uri }} style={styles.evidence}></Image>
 
-  //         </TouchableOpacity>
-  //       ) : (
-  //         <TouchableOpacity
-  //           style={styles.buttonCam}
-  //           onPress={() => handleLocationToCam('descarga')}>
-  //           <Text style={styles.text}>Descarga</Text>
-  //           <Icon name="camera" size={30} color="#370acd" />
-  //         </TouchableOpacity>
-  //       )}
-  //       {documentExist ? (
-  //         <TouchableOpacity style={styles.viewEvidences} onPress={() => handleDeleteEvidence('documento')}>
-  //           <Text>{documentExist.name}</Text>
-  //           <Text style={{ color: 'grey' }}>Click para excluir</Text>
-  //           <ImageBackground source={{ uri: documentExist.uri }} style={styles.evidence}></ImageBackground>
-  //         </TouchableOpacity>
-  //       ) : (
-  //         <TouchableOpacity
-  //           style={styles.buttonCam}
-  //           onPress={() => handleLocationToCam('documento')}>
-  //           <Text style={styles.text}>Documento</Text>
-  //           <Icon name="camera" size={30} color="#370acd" />
-  //         </TouchableOpacity>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.buttonCam}
+            onPress={() => handleLocationToCam('descarga')}>
+            <Text style={styles.text}>Descarga</Text>
+            <Icon name="camera" size={30} color="#370acd" />
+          </TouchableOpacity>
+        )}
+        {documentExist ? (
+          <TouchableOpacity style={styles.viewEvidences} onPress={() => handleDeleteEvidence('documento')}>
+            <Text>{documentExist.name}</Text>
+            <Text style={{ color: 'grey' }}>Click para excluir</Text>
+            <ImageBackground source={{ uri: documentExist.uri }} style={styles.evidence}></ImageBackground>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.buttonCam}
+            onPress={() => handleLocationToCam('documento')}>
+            <Text style={styles.text}>Documento</Text>
+            <Icon name="camera" size={30} color="#370acd" />
+          </TouchableOpacity>
 
-  //       )}
-  //     </View>
-  //       <TouchableOpacity onPress={sendBackend} style={styles.sendEvidencesView}>
-  //         <Text style={{ color: 'white' }}>Enviar</Text>
-  //       </TouchableOpacity>
-  //   </SafeAreaView>
-  // );
-    return(
-      <Map/>
-    )
+        )}
+      </View>
+        <TouchableOpacity onPress={sendBackend} style={styles.sendEvidencesView}>
+          <Text style={{ color: 'white' }}>Enviar</Text>
+        </TouchableOpacity>
+    </SafeAreaView>
+  );
+   
 }
 
 const styles = StyleSheet.create({

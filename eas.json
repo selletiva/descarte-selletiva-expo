@@ -2,6 +2,7 @@
   "cli": {
     "version": ">= 4.1.2"
   },
+  
     "build": {
       "preview": {
         "android": {
@@ -19,8 +20,4 @@
       "production": {}
     }
   
-,  
-  "submit": {
-    "production": {}
-  }
 }

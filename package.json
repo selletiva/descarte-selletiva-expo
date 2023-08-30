@@ -23,7 +23,6 @@
     "expo-location": "~16.1.0",
     "expo-media-library": "^15.4.1",
     "expo-status-bar": "~1.6.0",
-    "install": "^0.13.0",
     "npx": "^10.2.2",
     "react": "18.2.0",
     "react-native": "0.72.4",

@@ -28,14 +28,14 @@
       "permissions": [
         "android.permission.CAMERA"
       ],
-      "package": "com.steniosousa.Descarteselletiva"
+      "package": "com.selletiva1.Descarteselletiva"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "32741b3a-7595-4d43-901f-0f79ff07f916"
+        "projectId": "8700f51c-4e30-46ce-8013-c72a704c5589"
       }
     }
   }
