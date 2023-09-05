@@ -1,8 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
-// import { Cam } from '../components/Cam';
-// import Home from '../pages/Home';
 import { useAuth } from '../hooks/useAuth';
 import Login from '../Views/Login';
 import Home from '../Views/Home';

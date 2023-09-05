@@ -43,6 +43,8 @@ export default function Cam() {
       }
     }
 
+    console.log(saveEvidence)
+
     try {
       await AsyncStorage.mergeItem(nameMemory, JSON.stringify(saveEvidence))
       setIsLoading(false)
@@ -61,13 +63,14 @@ export default function Cam() {
   }
 
   async function savePicture() {
+    const nameMemory = JSON.stringify(id)
     setIsLoading(true)
     const nameImage = `${type.toString()}`;
+    const verifyIfAsyncStorageExist = await AsyncStorage.getItem(nameMemory)
+    if(!verifyIfAsyncStorageExist){
+      await AsyncStorage.setItem(nameMemory,'')
+    }
     saveAsync(nameImage, captured);
-  }
-
-  function toggleCameraType() {
-    setType(current => (current === CameraType.back ? CameraType.front : CameraType.back));
   }
 
   async function trashImage() {

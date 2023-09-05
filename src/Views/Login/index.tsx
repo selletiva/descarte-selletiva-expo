@@ -11,8 +11,8 @@ const Login: React.FC = () => {
   const [key, setKey] = useState('');
   const { doLogin, active } = useAuth();
 
-  function handleLogin() {
-    doLogin(key);
+  async function handleLogin() {
+    await doLogin(key);
     setKey('');
   }
 

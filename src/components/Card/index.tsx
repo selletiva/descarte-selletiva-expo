@@ -10,6 +10,7 @@ export function Card({ element }: any) {
     useNavigation<NativeStackNavigationProp<StackAuthenticatedParamList>>();
 
     useEffect(() =>{
+      console.log(element.destination)
     },[])
     
     function makePhoto() {
@@ -21,20 +22,20 @@ export function Card({ element }: any) {
         <TouchableOpacity onPress={makePhoto}>
           <View style={styles.container}>
             <Text style={styles.title}>
-              Tipo de resíduo: {element.type.nome ? element.type.nome : "Sem tipo de resíduo"}
+              Tipo de resíduo: {!element.type ? "Sem tipo" :element.type.nome}
             </Text>
             <Text style={styles.title}>
-              Destinatário: {element.destination.nome ? element.destination.nome : "sem destinatário"}
+              Destinatário: {!element.destination ?"Sem destinatário": element.destination.nome }
             </Text>
             <Text style={styles.title}>
-              Quantidade da operação: {element.quantity} {element.unitLabel}
+              Quantidade da operação: {!element.quantity?"Sem quantidade" : element.quantity} {!element.unitLabel ? "Sem unidade de medida" : element.unitLabel}
             </Text>
             <View style={styles.dateAndCNumberDoc}>
               <Text style={styles.text}>
-                Bairro: {element.destination.address.district ? element.destination.address.district : "Sem bairro"}
+                Bairro: {!element.destination ? "Sem bairro" :element.destination.address.district }
               </Text>
               <Text style={styles.text}>
-                Logradouro: {element.destination.address.street ? element.destination.address.street : "Sem Logradouro"}
+                Logradouro: {!element.destination ? "Sem logradouro" :element.destination.address.street }
               </Text>
             </View>
           </View>

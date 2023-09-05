@@ -3,7 +3,6 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import axios from 'axios';
 import React, {
   createContext,
   ReactNode,
@@ -19,6 +18,7 @@ import {
 } from '../routes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ModalAlert from '../components/Modal';
+import axios, { Axios } from 'axios';
 import { Alert } from 'react-native';
 
 export const AuthContext =  createContext({} as AuthProviderReturn);
@@ -52,16 +52,29 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
 
   const doLogin = useCallback(async (key: string) => {
     try {
-      const { data: userData } = await axios.post(
-        'http://sistema.selletiva.com.br/serverapp/auth',
-        { key },
-      );
-
-      setUser(userData);
-      setIsAuthenticated(true);
-
-      await AsyncStorage.mergeItem('user', JSON.stringify(userData));
-    } catch (e: any) {
+      const response = await fetch('http://sistema.selletiva.com.br/serverapp/auth', {
+        method: 'POST',
+        headers: {
+          Accept: '*/*',
+          'User-Agent': 'Thunder Client (https://www.thunderclient.com)',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ key })
+      });
+    
+      if (response.ok) {
+        const userData = await response.json();
+    
+        setUser(userData);
+        setIsAuthenticated(true);
+    
+        await AsyncStorage.setItem('user', JSON.stringify(userData));
+      } else {
+        const errorData = await response.json();
+        setTextModal(errorData.message);
+        setActive(!active);
+      }
+    } catch (e) {
       setTextModal(e.message);
       setActive(!active);
     }
@@ -70,7 +83,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
   const doLogout = useCallback(async () => {
     setUser({});
     setIsAuthenticated(false);
-    await AsyncStorage.mergeItem('user', '');
+    await AsyncStorage.removeItem('user');
   }, []);
 
   const redirectUser = useCallback(() => {

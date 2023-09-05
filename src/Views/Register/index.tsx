@@ -107,15 +107,16 @@ export function Register() {
       }
     };
     const nameMemory = JSON.stringify(id)
+
     try {
       await AsyncStorage.mergeItem(nameMemory, JSON.stringify(document))
       Alert.alert('Sucess', 'Salvo com sucesso', [
-        { text: 'OK', onPress: () => console.log('OK Pressed') },
+        { text: 'OK', onPress: () => setNameSave("Reenviar") },
       ]);
     } catch {
       await AsyncStorage.setItem(nameMemory, JSON.stringify(document))
     }
-
+    navigation.reset(id)
   }
 
   async function getPictures() {
@@ -167,33 +168,36 @@ export function Register() {
     }
   }
   async function sendBackend() {
-    if(!documentoExist || !chargeExist || !dischargeExist || !documentExist ){
-      Alert.alert('Conflito', 'Cadastrar as demais informações', [
-        { text: 'OK'},
-      ]);
-      return
-    }
-    setIsLoading(true)
-    const { id }: any = route.params;
-    const folderName = id.toString();
-    const folderInfo = await MediaLibrary.getAlbumAsync(folderName);
-    const async = await AsyncStorage.getItem(folderName)
-    const coords = JSON.parse(async)
-    const { assets } = await MediaLibrary.getAssetsAsync({
-      album: folderInfo,
-      mediaType: [MediaLibrary.MediaType.photo],
-    });
+    console.log(AsyncStorage.getAllKeys())
+    AsyncStorage.clear()
+return
+    // if (!documentoExist || !chargeExist || !dischargeExist || !documentExist) {
+    //   Alert.alert('Conflito', 'Cadastrar as demais informações', [
+    //     { text: 'OK' },
+    //   ]);
+    //   return
+    // }
+    // setIsLoading(true)
+    // const { id }: any = route.params;
+    // const folderName = id.toString();
+    // const folderInfo = await MediaLibrary.getAlbumAsync(folderName);
+    // const async = await AsyncStorage.getItem(folderName)
+    // const coords = JSON.parse(async)
+    // const { assets } = await MediaLibrary.getAssetsAsync({
+    //   album: folderInfo,
+    //   mediaType: [MediaLibrary.MediaType.photo],
+    // });
 
-    const locations = ['carga', 'descarga', 'documento']
-    locations.map(async (item, indice) => {
-      const pictureUri = coords[item]
-      const evidence64 = await FileSystem.readAsStringAsync(pictureUri.uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+    // const locations = ['carga', 'descarga', 'documento']
+    // locations.map(async (item, indice) => {
+    //   const pictureUri = coords[item]
+    //   const evidence64 = await FileSystem.readAsStringAsync(pictureUri.uri, {
+    //     encoding: FileSystem.EncodingType.Base64,
+    //   });
 
-      await sandToS3(item, evidence64)
-      handleFinalized()
-    })
+    //   await sandToS3(item, evidence64)
+    //   handleFinalized()
+    // })
   }
 
 
@@ -312,9 +316,15 @@ export function Register() {
           <Modal animationType="slide" transparent={true} visible={see}>
             <View style={styles.centeredView}>
               <View style={styles.modalView}>
-                <Text style={styles.modalText}>
-                  Por favor, preencha os campos vazios!
-                </Text>
+                {documento == "Já registrado" ? (
+                  <Text style={styles.modalText}>
+                    Por favor, alterar tipo de documento para o desejado!
+                  </Text>
+                ) : (
+                  <Text style={styles.modalText}>
+                    Por favor, preencha os campos vazios!
+                  </Text>
+                )}
                 <Pressable
                   style={[styles.button, styles.buttonClose]}
                   onPress={() => setActive()}>
@@ -425,12 +435,12 @@ export function Register() {
 
         )}
       </View>
-        <TouchableOpacity onPress={sendBackend} style={styles.sendEvidencesView}>
-          <Text style={{ color: 'white' }}>Enviar</Text>
-        </TouchableOpacity>
+      <TouchableOpacity onPress={sendBackend} style={styles.sendEvidencesView}>
+        <Text style={{ color: 'white' }}>Enviar</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
-   
+
 }
 
 const styles = StyleSheet.create({
