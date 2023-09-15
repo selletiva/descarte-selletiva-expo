@@ -73,7 +73,7 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styled.container}>
-      <Text>Version:1.0.2</Text>
+      <Text>Version:2.0.2</Text>
       <TouchableOpacity style={styled.signOut} onPress={logout}>
         <Icon name="sign-out" size={30} color="#000" />
       </TouchableOpacity>

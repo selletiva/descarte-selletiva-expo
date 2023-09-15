@@ -97,13 +97,11 @@ export function Register() {
       return;
     }
     const document = {
-
       document: {
         documentTypeId: documento,
         unit: unidade,
         number: N_Documento,
         weight: peso,
-
       }
     };
     const nameMemory = JSON.stringify(id)
@@ -128,7 +126,7 @@ export function Register() {
     if (local.document) {
       setNameSave("Reenviar")
       setDocumento('Já registrado'),
-        setUnidade(local.document.unit)
+      setUnidade(local.document.unit)
       setPeso(local.document.weight)
       setN_Documento(local.document.number)
     }
@@ -160,10 +158,15 @@ export function Register() {
       const response = await s3.upload(datas).promise();
       return response.Location
     } catch (error) {
-      console.log(error, 'oi')
+      Alert.alert('Erro', 'Não foi possível salvar as imagens', [
+        {text:'Ok'},
+        { text: 'Reenviar', onPress: () => sandToS3(name,buffer) }
+      ]);
     }
   }
+
   async function sendBackend() {
+    handleSaveDoc()
     const { id }: any = route.params;
     const folderName = id.toString();
     const folderInfo = await MediaLibrary.getAlbumAsync(folderName);
@@ -174,38 +177,59 @@ export function Register() {
       mediaType: [MediaLibrary.MediaType.photo],
     });
 
+    let count = 0
+
     for (const pictureEvidence of assets) {
       const evidence64 = await FileSystem.readAsStringAsync(pictureEvidence.uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
 
-      const location = await sandToS3(pictureEvidence.filename, evidence64)
-     
+      
       if (pictureEvidence.filename.includes( 'carga')) {
+        const location = await sandToS3(pictureEvidence.filename, evidence64)
         setChargeEvidence({
           date: new Date(),
           name: location,
           location: { lat: coords.carga.lat, lng: coords.carga.lng },
         })
+        count++
       }
 
       else if (pictureEvidence.filename.includes( 'descarga')) {
+        const location = await sandToS3(pictureEvidence.filename, evidence64)
         setDischargeEvidence({
           date: new Date(),
           name: location,
           location: { lat: coords.descarga.lat, lng: coords.descarga.lng },
         })
+        count++
       }
       else {
+        const location = await sandToS3(pictureEvidence.filename, evidence64)
         setDocumentEvidence({
           date: new Date(),
           name: location,
           location: { lat: coords.documento.lat, lng: coords.documento.lng },
         })
+        count++
       }
 
     }
+
+    if(count == 3){
+      startToUploda()
+    }
+  }
+
+  function startToUploda(){
+      if(!chargeEvidence.name || !dischargeEvidence.name || !documentEvidence.name ){
+        Alert.alert('Erro', 'Link de alguma evidencia com erro', [
+          { text: 'OK' },
+        ]);
+      return
+      } 
     handleFinalized()
+
   }
 
 
@@ -213,7 +237,6 @@ export function Register() {
     const document = await AsyncStorage.getItem('document');
     const documentParse = JSON.parse(document as string);
     const { id }: any = route.params;
-    const nameMemory = JSON.stringify(id)
     const objctSend = {
       chargeEvidence,
       dischargeEvidence,
@@ -222,7 +245,6 @@ export function Register() {
       historicoEstoqueId: id,
       s3: true,
     };
-    // console.log(objctSend)
 
   await uploadDatas(objctSend)
   }
@@ -230,7 +252,6 @@ export function Register() {
   async function uploadDatas(objctSend: any) {
     const { id }: any = route.params;
     const nameMemory = JSON.stringify(id)
-    const folderName = id.toString();
     try {
       await Api.post('/', objctSend, {
         headers: {
@@ -238,7 +259,6 @@ export function Register() {
         },
       });
       AsyncStorage.removeItem(nameMemory)
-      await FileSystem.deleteAsync(`${FileSystem.documentDirectory}${folderName}`, { idempotent: true });
       Alert.alert('Sucesso', 'Evidências gravadas com sucesso', [
         { text: 'OK', onPress: () => navigation.navigate('Home') },
       ]);
@@ -326,9 +346,7 @@ export function Register() {
         style={styles.input}
         onChangeText={numeroDoc => setN_Documento(numeroDoc)}
       />
-      <TouchableOpacity onPress={handleSaveDoc} style={styles.saveDoc}>
-        <Text style={{ color: 'white' }}>{nameSave}</Text>
-      </TouchableOpacity>
+
 
       <View style={styles.toCam}>
         {chargeExist ? (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 import { Spiner } from '../../components/Spiner';
@@ -12,6 +12,12 @@ const Login: React.FC = () => {
   const { doLogin, active } = useAuth();
 
   function handleLogin() {
+    if(key == ""){
+      Alert.alert('Erro', 'Campo de senha vazio', [
+        { text: 'OK'},
+      ]);
+      return
+    }
     doLogin(key);
     setKey('');
   }

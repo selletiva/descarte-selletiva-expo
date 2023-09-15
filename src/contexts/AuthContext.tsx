@@ -58,11 +58,10 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
 
       setUser(userData);
       setIsAuthenticated(true);
-
       await AsyncStorage.setItem('user', JSON.stringify(userData));
     } catch (e: any) {
       setTextModal('Códico com Erro');
-      setActive(oldState => !oldState);
+      setActive(false);
     }
   }, []);
 
