@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native"
-import { Camera, CameraType } from 'expo-camera';
+import { Camera } from 'expo-camera';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from 'expo-location';
@@ -14,37 +14,72 @@ import Spinner from 'react-native-loading-spinner-overlay';
 export default function Cam() {
   const route = useRoute();
   const [captured, setCapturedImage] = useState(null)
-  const cameraRef = useRef<Camera>(null);
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
   const { id, type } = route.params;
-
+  const [ textSpeener, setTextSpeener] = useState('Carregando...')
+  const cameraRef = useRef<Camera>(null);
+  
   async function capture() {
+    setTextSpeener('Capturando...')
+    setIsLoading(true)
     try {
-      const { uri } = await cameraRef.current.takePictureAsync(
-        quality = 0.3
-      );
+      const { uri } = await cameraRef.current.takePictureAsync({
+        quality:0.3,
+      });
       setCapturedImage(uri);
+      setIsLoading(false)
     } catch (error) {
+      setIsLoading(false)
       Alert.alert('Erro', "Erro ao capturar evidência", [
-        { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
-        { text: 'Tirar novamente', onPress:() => capture() }
+        { text: 'Retornar', onPress: () => navigation.navigate('Register', { id }) },
+        { text: 'Tirar novamente'}
       ])
     }
   };
 
   async function saveAsync(nameImage, asset) {
     const nameMemory = JSON.stringify(id)
-    let currentLocation = await Location.getCurrentPositionAsync({});
+    setIsLoading(true)
+    const localStorage = await AsyncStorage.getItem(nameMemory)
+    setTextSpeener('Buscando localização...')
+    setIsLoading(false)
+    let currentLocation = await Location.getCurrentPositionAsync({
+      timeInterval:3000,
+      accuracy: 1,
+    });
 
+    if(!currentLocation){
+      Alert.alert('Erro', 'Não foi possível salvar localização', [
+        { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
+      ]);
+    }
     const saveEvidence = {
       [nameImage]: {
         uri: asset,
-        lat: currentLocation.coords.latitude,
-        lng: currentLocation.coords.longitude
+        lat: currentLocation.coords.latitude || 0,
+        lng: currentLocation.coords.longitude || 0
       }
     }
-   
+
+    if(!localStorage){
+      setTextSpeener('Gravando no celular...')
+      try {
+        await AsyncStorage.setItem(nameMemory, JSON.stringify(saveEvidence))
+        setIsLoading(false)
+        Alert.alert('Sucess', 'Salvo com sucesso', [
+          { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
+        ]);
+      } catch {
+        setIsLoading(false)
+        Alert.alert('Erro', 'Não foi possível salvar a imagem', [
+          { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
+          { text: 'Salvar novamente', onPress: () => savePicture( )},
+        ]);
+      }
+      return
+    }
+    setTextSpeener('Gravando no celular...')
     try {
       await AsyncStorage.mergeItem(nameMemory, JSON.stringify(saveEvidence))
       setIsLoading(false)
@@ -64,12 +99,14 @@ export default function Cam() {
 
   async function savePicture() {
     setIsLoading(true)
+    setTextSpeener('Salvando')
     const nameMemory = JSON.stringify(id)
     const nameImage = `${type.toString()}`;
     const verifyIfAsyncStorageExist = await AsyncStorage.getItem(nameMemory)
     if(!verifyIfAsyncStorageExist){
       await AsyncStorage.setItem(nameMemory,'')
     }
+    setIsLoading(false)
     saveAsync(nameImage, captured);
   }
 
@@ -104,7 +141,7 @@ export default function Cam() {
       </Camera>
       <Spinner
         visible={isLoading}
-        textContent={'Carregando...'}
+        textContent={textSpeener}
         textStyle={{ color: '#FFF' }}
       />
     </View >

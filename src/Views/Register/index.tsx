@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback,  useEffect,  useState } from 'react';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import AWS from 'aws-sdk';
@@ -19,6 +19,7 @@ import {
   Alert,
   Image,
   ImageBackground,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
@@ -27,9 +28,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { StackAuthenticatedParamList } from '../../routes';
 import Api from '../../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Spiner } from '../../components/Spiner';
 import Spinner from 'react-native-loading-spinner-overlay';
-import Map from '../../components/maps';
 
 type returnDatas = {
   id: Number;
@@ -45,13 +44,12 @@ export function Register() {
   const [unidade, setUnidade] = useState('Selecionar');
   const [N_Documento, setN_Documento] = useState('0');
   const [peso, setPeso] = useState('0');
-  const [nameSave, setNameSave] = useState('Salvar')
+  const [allLocations, setAllLocations] = useState({ carga: null, descarga: null, documento: null })
   const [see, setSee] = useState(false);
   const [arrayTipoDocumento, setArrayTipoDocumento] = useState<returnDatas[]>(
     [],
   );
   const [isLoading, setIsLoading] = useState(false);
-  const allLocations = { carga: null, descarga: null, documento: null }
   const [documentoExist, setDocumentoExist] = useState(null)
 
   const route = useRoute();
@@ -86,36 +84,22 @@ export function Register() {
 
   async function handleSaveDoc() {
     const { id }: any = route.params;
-    if (
-      unidade === 'Selecionar' ||
-      N_Documento === '0' ||
-      documento === 'Selecionar' || documento === 'Já registrado' ||
-      peso === '0'
-    ) {
-      setSee(true);
-      return;
-    }
+   
     const document = {
-
       document: {
         documentTypeId: documento,
         unit: unidade,
         number: N_Documento,
         weight: peso,
-
       }
     };
     const nameMemory = JSON.stringify(id)
 
     try {
       await AsyncStorage.mergeItem(nameMemory, JSON.stringify(document))
-      Alert.alert('Sucess', 'Salvo com sucesso', [
-        { text: 'OK', onPress: () => setNameSave("Reenviar") },
-      ]);
     } catch {
       await AsyncStorage.setItem(nameMemory, JSON.stringify(document))
     }
-    navigation.reset(id)
   }
 
   async function getPictures() {
@@ -124,15 +108,14 @@ export function Register() {
     const nameMemory = JSON.stringify(id)
     const dado = await AsyncStorage.getItem(nameMemory)
     const local = JSON.parse(dado)
+    console.log(documento)
     if(!local){
       await AsyncStorage.setItem(nameMemory,'')
     }
 
     if (local.document) {
       setDocumentoExist(true)
-      setNameSave("Reenviar")
-      setDocumento('Já registrado'),
-        setUnidade(local.document.unit)
+      setUnidade(local.document.unit)
       setPeso(local.document.weight)
       setN_Documento(local.document.number)
     }
@@ -146,6 +129,19 @@ export function Register() {
       setDocumentExist({ uri: local.documento.uri, lat: local.documento.lat, lng: local.documento.lng, name: 'Documento' })
     }
   }
+  useEffect(() =>{
+    async function editDocument(){
+      const { id }: any = route.params;
+      const nameMemory = JSON.stringify(id)
+      const dado =await AsyncStorage.getItem(nameMemory)
+      const local = JSON.parse(dado)
+      const nameDoc = arrayTipoDocumento.find((item) => item.id == local.document.documentTypeId)
+      setDocumento(nameDoc.name)
+
+    }
+    editDocument()
+  },[arrayTipoDocumento])
+
 
 
   async function sandToS3(name, buffer) {
@@ -160,9 +156,14 @@ export function Register() {
       Key: name + Date.now() + '.jpeg',
       Body: decodedBuffer,
     };
+
     try {
       const { Location } = await s3.upload(datas).promise();
-      allLocations[name] = Location
+      setAllLocations((prevLocations) => ({
+        ...prevLocations,
+        [name]: Location,
+      }));
+      
     } catch (error) {
       setIsLoading(false)
       Alert.alert('Erro', 'Erro ao salvar evidências no s3', [
@@ -170,17 +171,31 @@ export function Register() {
         { text: 'Reenviar', onPress: () => sandToS3(name,buffer) },
       ]);
     }
+
   }
 
 
   async function sendBackend() {
+    if (
+      unidade === 'Selecionar' ||
+      N_Documento === '0' ||
+      documento === 'Selecionar' ||
+      peso === '0'
+    ) {
+      Alert.alert('Sem documento', 'Cadastrar informações do documento', [
+        { text: 'OK' },
+      ]);
+      return;
+    }
     handleSaveDoc()
+    getPictures()
     if (!documentoExist || !chargeExist || !dischargeExist || !documentExist) {
-      Alert.alert('Conflito', 'Cadastrar as demais informações', [
+      Alert.alert('Sem evidências', 'Cadastrar todas as informações', [
         { text: 'OK' },
       ]);
       return
     }
+
     setIsLoading(true)
     const { id }: any = route.params;
     const folderName = id.toString();
@@ -197,8 +212,15 @@ export function Register() {
 
       await sandToS3(item, evidence64)
     })
-    handleFinalized()
+    
   }
+  
+  useEffect(() =>{
+    if(allLocations.carga && allLocations.descarga && allLocations.documento){      
+      handleFinalized()
+    }
+    
+  },[allLocations])
 
 
   async function handleFinalized() {
@@ -225,23 +247,22 @@ export function Register() {
       historicoEstoqueId: id,
       s3: true,
     };
-
     await uploadDatas(objctSend)
   }
 
   async function uploadDatas(objctSend: any) {
     const { id }: any = route.params;
     const nameMemory = JSON.stringify(id)
-    const folderName = id.toString();
+    console.log(objctSend)
     try {
-      await Api.post('/', objctSend, {
+      const {data}  = await Api.post('/', objctSend, {
         headers: {
           Authorization: user.auth_key,
         },
       });
       AsyncStorage.removeItem(nameMemory)
-      await FileSystem.deleteAsync(`${FileSystem.documentDirectory}${folderName}`, { idempotent: true });
       setIsLoading(false)
+
 
       Alert.alert('Sucesso', 'Evidências gravadas com sucesso', [
         { text: 'OK', onPress: () => navigation.navigate('Home') },
@@ -303,7 +324,7 @@ export function Register() {
     }, [])
   );
   return (
-    <SafeAreaView style={styles.main}>
+    <ScrollView style={styles.main}>
       <Spinner
         visible={isLoading}
         textContent={'Enviando evidências...'}
@@ -353,9 +374,16 @@ export function Register() {
             );
           })}
         </Picker>
+        <Text style={styles.text}>Nº documento: </Text>
+      <TextInput
+        value={N_Documento}
+        keyboardType="numeric"
+        style={styles.input}
+        onChangeText={numeroDoc => setN_Documento(numeroDoc)}
+      />
         <View style={styles.flexView}>
           <View>
-            <Text style={styles.text}>Peso: </Text>
+            <Text style={styles.text}>Quantidade: </Text>
             <TextInput
               keyboardType="numeric"
               value={peso}
@@ -377,13 +405,7 @@ export function Register() {
         </View>
       </View>
 
-      <Text style={styles.text}>Nº documento: </Text>
-      <TextInput
-        value={N_Documento}
-        keyboardType="numeric"
-        style={styles.input}
-        onChangeText={numeroDoc => setN_Documento(numeroDoc)}
-      />
+     
      
       <View style={styles.toCam}>
         {chargeExist ? (
@@ -434,7 +456,7 @@ export function Register() {
       <TouchableOpacity onPress={sendBackend} style={styles.sendEvidencesView}>
         <Text style={{ color: 'white' }}>Enviar</Text>
       </TouchableOpacity>
-    </SafeAreaView>
+    </ScrollView>
   );
 
 }
@@ -445,8 +467,10 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   main: {
-    margin: 20,
-    marginTop: 30,
+    flex:1,
+    marginTop:50,
+    marginLeft:20,
+    marginRight:20,
   },
   selectOption: {
     flexDirection: 'column',
@@ -454,15 +478,16 @@ const styles = StyleSheet.create({
 
   text: {
     color: 'black',
-    fontSize: 15,
+    fontSize: 10,
   },
   toCam: {
     width: '100%',
-    marginTop: 100,
+    marginTop: 30,
     alignItems: 'center',
     justifyContent: 'space-around',
     display: 'flex',
-    flexDirection: 'row'
+    flexDirection: 'row',
+    gap:10,
   },
   buttonCam: {
     backgroundColor: '#bcbcbc',
@@ -470,7 +495,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 100,
-    width: 100,
+    width: '33%',
     padding: 10,
     borderRadius: 5,
   },
@@ -539,8 +564,8 @@ const styles = StyleSheet.create({
     paddingTop: 5,
   },
   evidence: {
-    height: 200,
-    width: 100,
+    height: 150,
+    width: '100%',
     borderRadius: 5,
     margin: 2,
 
@@ -550,14 +575,15 @@ const styles = StyleSheet.create({
     height: 30,
     justifyContent: 'center',
     borderRadius: 5,
-    bottom: -10,
     alignItems: 'center',
+    margin:10,
 
   },
 
   viewEvidences: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center'
+    alignItems: 'center',
+    width:'33%'
   }
 });

@@ -129,7 +129,7 @@ export default function Home() {
         textContent={'Buscando solicitações...'}
         textStyle={{ color: '#FFF' }}
       />
-      <Text>Version:1.0.2</Text>
+      <Text>Version:2.0.0</Text>
       <TouchableOpacity style={styled.signOut} onPress={logout}>
         <Icon name="sign-out" size={30} color="#000" />
       </TouchableOpacity>
