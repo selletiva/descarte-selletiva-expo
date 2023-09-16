@@ -25,7 +25,7 @@
     "expo-media-library": "^15.4.1",
     "expo-status-bar": "~1.6.0",
     "npx": "^10.2.2",
-    "react": "18.2.0",
+    "react": "^18.2.0",
     "react-native": "0.72.3",
     "react-native-loading-spinner-overlay": "^3.0.1",
     "react-native-maps": "^1.7.1",

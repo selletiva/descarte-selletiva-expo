@@ -69,7 +69,6 @@ export function Register() {
     try {
       const id: any = route.params;
       await AsyncStorage.setItem('idHistorico', JSON.stringify(id.id));
-
       const tipoDocumento = await Api.get('/getTiposDocs', {
         headers: {
           Authorization: user.auth_key,
@@ -125,6 +124,9 @@ export function Register() {
     const nameMemory = JSON.stringify(id)
     const dado = await AsyncStorage.getItem(nameMemory)
     const local = JSON.parse(dado)
+    if(!local){
+      await AsyncStorage.setItem(nameMemory,'')
+    }
 
     if (local.document) {
       setDocumentoExist(true)
@@ -162,42 +164,40 @@ export function Register() {
       const { Location } = await s3.upload(datas).promise();
       allLocations[name] = Location
     } catch (error) {
+      setIsLoading(false)
       Alert.alert('Erro', 'Erro ao salvar evidências no s3', [
-        { text: 'OK', onPress: () => console.log('OK Pressed') },
+        { text: 'Ok' },
+        { text: 'Reenviar', onPress: () => sandToS3(name,buffer) },
       ]);
     }
   }
+
+
   async function sendBackend() {
-    console.log(AsyncStorage.getAllKeys())
-    AsyncStorage.clear()
-return
-    // if (!documentoExist || !chargeExist || !dischargeExist || !documentExist) {
-    //   Alert.alert('Conflito', 'Cadastrar as demais informações', [
-    //     { text: 'OK' },
-    //   ]);
-    //   return
-    // }
-    // setIsLoading(true)
-    // const { id }: any = route.params;
-    // const folderName = id.toString();
-    // const folderInfo = await MediaLibrary.getAlbumAsync(folderName);
-    // const async = await AsyncStorage.getItem(folderName)
-    // const coords = JSON.parse(async)
-    // const { assets } = await MediaLibrary.getAssetsAsync({
-    //   album: folderInfo,
-    //   mediaType: [MediaLibrary.MediaType.photo],
-    // });
+    handleSaveDoc()
+    if (!documentoExist || !chargeExist || !dischargeExist || !documentExist) {
+      Alert.alert('Conflito', 'Cadastrar as demais informações', [
+        { text: 'OK' },
+      ]);
+      return
+    }
+    setIsLoading(true)
+    const { id }: any = route.params;
+    const folderName = id.toString();
+    const async = await AsyncStorage.getItem(folderName)
+    const coords = JSON.parse(async)
 
-    // const locations = ['carga', 'descarga', 'documento']
-    // locations.map(async (item, indice) => {
-    //   const pictureUri = coords[item]
-    //   const evidence64 = await FileSystem.readAsStringAsync(pictureUri.uri, {
-    //     encoding: FileSystem.EncodingType.Base64,
-    //   });
 
-    //   await sandToS3(item, evidence64)
-    //   handleFinalized()
-    // })
+    const locations = ['carga', 'descarga', 'documento']
+    locations.map(async (item, indice) => {
+      const pictureUri = coords[item]
+      const evidence64 = await FileSystem.readAsStringAsync(pictureUri.uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      await sandToS3(item, evidence64)
+    })
+    handleFinalized()
   }
 
 
@@ -248,7 +248,6 @@ return
       ]);
     } catch (error) {
       setIsLoading(false)
-
       Alert.alert('Erro', 'Erro ao salvar evidências', [
         { text: 'OK', onPress: () => console.log('OK Pressed') },
       ]);
@@ -385,10 +384,7 @@ return
         style={styles.input}
         onChangeText={numeroDoc => setN_Documento(numeroDoc)}
       />
-      <TouchableOpacity onPress={handleSaveDoc} style={styles.saveDoc}>
-        <Text style={{ color: 'white' }}>{nameSave}</Text>
-      </TouchableOpacity>
-
+     
       <View style={styles.toCam}>
         {chargeExist ? (
           <TouchableOpacity style={styles.viewEvidences} onPress={() => handleDeleteEvidence('carga')}>

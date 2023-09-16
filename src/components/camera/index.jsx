@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native"
 import { Camera, CameraType } from 'expo-camera';
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from 'expo-location';
 import { ButtonPicture, ButtonRePicture, Buttons, ImagemPicture, ViewPicture } from "./styled";
@@ -18,15 +17,18 @@ export default function Cam() {
   const cameraRef = useRef<Camera>(null);
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
-  const { id, type }: any = route.params;
+  const { id, type } = route.params;
 
   async function capture() {
     try {
-      const { uri } = await cameraRef.current.takePictureAsync();
+      const { uri } = await cameraRef.current.takePictureAsync(
+        quality = 0.3
+      );
       setCapturedImage(uri);
     } catch (error) {
       Alert.alert('Erro', "Erro ao capturar evidência", [
-        { text: 'OK' }
+        { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
+        { text: 'Tirar novamente', onPress:() => capture() }
       ])
     }
   };
@@ -42,9 +44,7 @@ export default function Cam() {
         lng: currentLocation.coords.longitude
       }
     }
-
-    console.log(saveEvidence)
-
+   
     try {
       await AsyncStorage.mergeItem(nameMemory, JSON.stringify(saveEvidence))
       setIsLoading(false)
@@ -52,10 +52,10 @@ export default function Cam() {
         { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
       ]);
     } catch {
-      await AsyncStorage.setItem(nameMemory, JSON.stringify(saveEvidence))
       setIsLoading(false)
-      Alert.alert('Sucess', 'Salvo com sucesso', [
+      Alert.alert('Erro', 'Não foi possível salvar a imagem', [
         { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
+        { text: 'Salvar novamente', onPress: () => savePicture( )},
       ]);
     }
     setIsLoading(false)
@@ -63,8 +63,8 @@ export default function Cam() {
   }
 
   async function savePicture() {
-    const nameMemory = JSON.stringify(id)
     setIsLoading(true)
+    const nameMemory = JSON.stringify(id)
     const nameImage = `${type.toString()}`;
     const verifyIfAsyncStorageExist = await AsyncStorage.getItem(nameMemory)
     if(!verifyIfAsyncStorageExist){
