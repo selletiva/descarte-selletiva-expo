@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback,  useEffect,  useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import AWS from 'aws-sdk';
@@ -84,7 +84,7 @@ export function Register() {
 
   async function handleSaveDoc() {
     const { id }: any = route.params;
-   
+
     const document = {
       document: {
         documentTypeId: documento,
@@ -108,8 +108,8 @@ export function Register() {
     const nameMemory = JSON.stringify(id)
     const dado = await AsyncStorage.getItem(nameMemory)
     const local = JSON.parse(dado)
-    if(!local){
-      await AsyncStorage.setItem(nameMemory,'')
+    if (!local) {
+      await AsyncStorage.setItem(nameMemory, '')
     }
 
     if (local.document) {
@@ -128,18 +128,18 @@ export function Register() {
       setDocumentExist({ uri: local.documento.uri, lat: local.documento.lat, lng: local.documento.lng, name: 'Documento' })
     }
   }
-  useEffect(() =>{
-    async function editDocument(){
+  useEffect(() => {
+    async function editDocument() {
       const { id }: any = route.params;
       const nameMemory = JSON.stringify(id)
-      const dado =await AsyncStorage.getItem(nameMemory)
+      const dado = await AsyncStorage.getItem(nameMemory)
       const local = JSON.parse(dado)
       const nameDoc = arrayTipoDocumento.find((item) => item.id == local.document.documentTypeId)
       setDocumento(nameDoc.name)
 
     }
     editDocument()
-  },[arrayTipoDocumento])
+  }, [arrayTipoDocumento])
 
 
 
@@ -162,12 +162,12 @@ export function Register() {
         ...prevLocations,
         [name]: Location,
       }));
-      
+
     } catch (error) {
       setIsLoading(false)
       Alert.alert('Erro', 'Erro ao salvar evidências no s3', [
         { text: 'Ok' },
-        { text: 'Reenviar', onPress: () => sandToS3(name,buffer) },
+        { text: 'Reenviar', onPress: () => sandToS3(name, buffer) },
       ]);
     }
 
@@ -175,7 +175,29 @@ export function Register() {
 
 
   async function sendBackend() {
+    const { id }: any = route.params;
+    const nameMemory = JSON.stringify(id)
+    const dado = await AsyncStorage.getItem(nameMemory)
+    const local = JSON.parse(dado)
+    if (!local) {
+      await AsyncStorage.setItem(nameMemory, '')
+    }
 
+    if (local.document) {
+      setDocumentoExist(true)
+      setUnidade(local.document.unit)
+      setPeso(local.document.weight)
+      setN_Documento(local.document.number)
+    }
+    if (local.carga) {
+      setChargeExist({ uri: local.carga.uri, lat: local.carga.lat, lng: local.carga.lng, name: 'Carga' })
+    }
+    if (local.descarga) {
+      setDIschargeExist({ uri: local.descarga.uri, lat: local.descarga.lat, lng: local.descarga.lng, name: 'Descarga' })
+    }
+    if (local.documento) {
+      setDocumentExist({ uri: local.documento.uri, lat: local.documento.lat, lng: local.documento.lng, name: 'Documento' })
+    }
     if (
       unidade === 'Selecionar' ||
       N_Documento === '0' ||
@@ -187,20 +209,15 @@ export function Register() {
       ]);
       return;
     }
-    await getPictures()
     handleSaveDoc()
-   await returnForS3()
+    await returnForS3()
   }
 
-  async function returnForS3(){
-    if (!documentoExist || !chargeExist || !dischargeExist || !documentExist) {
-      Alert.alert('Sem evidências', 'Cadastrar todas as informações', [
-        { text: 'OK' },
-      ]);
-      return
-    }
+  async function returnForS3() {
+    await getPictures()
 
     setIsLoading(true)
+
     const { id }: any = route.params;
     const folderName = id.toString();
     const async = await AsyncStorage.getItem(folderName)
@@ -217,13 +234,13 @@ export function Register() {
       await sandToS3(item, evidence64)
     })
   }
-  
-  useEffect(() =>{
-    if(allLocations.carga && allLocations.descarga && allLocations.documento){      
+
+  useEffect(() => {
+    if (allLocations.carga && allLocations.descarga && allLocations.documento) {
       handleFinalized()
     }
-    
-  },[allLocations])
+
+  }, [allLocations])
 
 
   async function handleFinalized() {
@@ -258,7 +275,7 @@ export function Register() {
     const nameMemory = JSON.stringify(id)
     console.log(objctSend)
     try {
-      const {data}  = await Api.post('/', objctSend, {
+      const { data } = await Api.post('/', objctSend, {
         headers: {
           Authorization: user.auth_key,
         },
@@ -378,12 +395,12 @@ export function Register() {
           })}
         </Picker>
         <Text style={styles.text}>Nº documento: </Text>
-      <TextInput
-        value={N_Documento}
-        keyboardType="numeric"
-        style={styles.input}
-        onChangeText={numeroDoc => setN_Documento(numeroDoc)}
-      />
+        <TextInput
+          value={N_Documento}
+          keyboardType="numeric"
+          style={styles.input}
+          onChangeText={numeroDoc => setN_Documento(numeroDoc)}
+        />
         <View style={styles.flexView}>
           <View>
             <Text style={styles.text}>Quantidade: </Text>
@@ -408,8 +425,8 @@ export function Register() {
         </View>
       </View>
 
-     
-     
+
+
       <View style={styles.toCam}>
         {chargeExist ? (
           <TouchableOpacity style={styles.viewEvidences} onPress={() => handleDeleteEvidence('carga')}>
@@ -470,10 +487,10 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   main: {
-    flex:1,
-    marginTop:50,
-    marginLeft:20,
-    marginRight:20,
+    flex: 1,
+    marginTop: 50,
+    marginLeft: 20,
+    marginRight: 20,
   },
   selectOption: {
     flexDirection: 'column',
@@ -490,7 +507,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     display: 'flex',
     flexDirection: 'row',
-    gap:10,
+    gap: 10,
   },
   buttonCam: {
     backgroundColor: '#bcbcbc',
@@ -579,7 +596,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 5,
     alignItems: 'center',
-    margin:10,
+    margin: 10,
 
   },
 
@@ -587,6 +604,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    width:'33%'
+    width: '33%'
   }
 });

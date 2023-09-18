@@ -70,13 +70,16 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
     
         await AsyncStorage.setItem('user', JSON.stringify(userData));
       } else {
-        const errorData = await response.json();
-        setTextModal(errorData.message);
-        setActive(!active);
+        Alert.alert('Erro', 'Código de acesso inválido', [
+          { text: 'OK' },
+        ]);
+        return
       }
     } catch (e) {
-      setTextModal(e.message);
-      setActive(!active);
+      Alert.alert('Erro', 'Código de acesso inválido', [
+        { text: 'OK' },
+      ]);
+      return
     }
   }, []);
 
