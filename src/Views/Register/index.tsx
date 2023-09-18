@@ -108,7 +108,6 @@ export function Register() {
     const nameMemory = JSON.stringify(id)
     const dado = await AsyncStorage.getItem(nameMemory)
     const local = JSON.parse(dado)
-    console.log(documento)
     if(!local){
       await AsyncStorage.setItem(nameMemory,'')
     }
@@ -176,6 +175,7 @@ export function Register() {
 
 
   async function sendBackend() {
+
     if (
       unidade === 'Selecionar' ||
       N_Documento === '0' ||
@@ -187,8 +187,12 @@ export function Register() {
       ]);
       return;
     }
+    await getPictures()
     handleSaveDoc()
-    getPictures()
+   await returnForS3()
+  }
+
+  async function returnForS3(){
     if (!documentoExist || !chargeExist || !dischargeExist || !documentExist) {
       Alert.alert('Sem evidências', 'Cadastrar todas as informações', [
         { text: 'OK' },
@@ -212,7 +216,6 @@ export function Register() {
 
       await sandToS3(item, evidence64)
     })
-    
   }
   
   useEffect(() =>{

@@ -67,9 +67,7 @@ export default function Cam() {
       try {
         await AsyncStorage.setItem(nameMemory, JSON.stringify(saveEvidence))
         setIsLoading(false)
-        Alert.alert('Sucess', 'Salvo com sucesso', [
-          { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
-        ]);
+        navigation.navigate('Register', { id }) 
       } catch {
         setIsLoading(false)
         Alert.alert('Erro', 'Não foi possível salvar a imagem', [
@@ -83,9 +81,7 @@ export default function Cam() {
     try {
       await AsyncStorage.mergeItem(nameMemory, JSON.stringify(saveEvidence))
       setIsLoading(false)
-      Alert.alert('Sucess', 'Salvo com sucesso', [
-        { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
-      ]);
+      navigation.navigate('Register', { id })
     } catch {
       setIsLoading(false)
       Alert.alert('Erro', 'Não foi possível salvar a imagem', [
