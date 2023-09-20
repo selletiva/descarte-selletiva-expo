@@ -17,15 +17,15 @@ export default function Cam() {
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
   const { id, type } = route.params;
-  const [ textSpeener, setTextSpeener] = useState('Carregando...')
+  const [textSpeener, setTextSpeener] = useState('Carregando...')
   const cameraRef = useRef<Camera>(null);
-  
+
   async function capture() {
     setTextSpeener('Capturando...')
     setIsLoading(true)
     try {
       const { uri } = await cameraRef.current.takePictureAsync({
-        quality:0.3,
+        quality: 0.3,
       });
       setCapturedImage(uri);
       setIsLoading(false)
@@ -33,7 +33,7 @@ export default function Cam() {
       setIsLoading(false)
       Alert.alert('Erro', "Erro ao capturar evidência", [
         { text: 'Retornar', onPress: () => navigation.navigate('Register', { id }) },
-        { text: 'Tirar novamente'}
+        { text: 'Tirar novamente' }
       ])
     }
   };
@@ -45,34 +45,38 @@ export default function Cam() {
     setTextSpeener('Buscando localização...')
     setIsLoading(false)
     let currentLocation = await Location.getCurrentPositionAsync({
-      timeInterval:3000,
+      timeInterval: 3000,
       accuracy: 1,
     });
 
-    if(!currentLocation){
+    if (!currentLocation) {
       Alert.alert('Erro', 'Não foi possível salvar localização', [
         { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
       ]);
     }
+    const dataAtual = new Date();
+    dataAtual.setHours(dataAtual.getHours() - 3)
+
     const saveEvidence = {
       [nameImage]: {
         uri: asset,
         lat: currentLocation.coords.latitude || 0,
-        lng: currentLocation.coords.longitude || 0
+        lng: currentLocation.coords.longitude || 0,
+        date: dataAtual
       }
     }
 
-    if(!localStorage){
+    if (!localStorage) {
       setTextSpeener('Gravando no celular...')
       try {
         await AsyncStorage.setItem(nameMemory, JSON.stringify(saveEvidence))
         setIsLoading(false)
-        navigation.navigate('Register', { id }) 
+        navigation.navigate('Register', { id })
       } catch {
         setIsLoading(false)
         Alert.alert('Erro', 'Não foi possível salvar a imagem', [
           { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
-          { text: 'Salvar novamente', onPress: () => savePicture( )},
+          { text: 'Salvar novamente', onPress: () => savePicture() },
         ]);
       }
       return
@@ -86,7 +90,7 @@ export default function Cam() {
       setIsLoading(false)
       Alert.alert('Erro', 'Não foi possível salvar a imagem', [
         { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
-        { text: 'Salvar novamente', onPress: () => savePicture( )},
+        { text: 'Salvar novamente', onPress: () => savePicture() },
       ]);
     }
     setIsLoading(false)
@@ -99,8 +103,8 @@ export default function Cam() {
     const nameMemory = JSON.stringify(id)
     const nameImage = `${type.toString()}`;
     const verifyIfAsyncStorageExist = await AsyncStorage.getItem(nameMemory)
-    if(!verifyIfAsyncStorageExist){
-      await AsyncStorage.setItem(nameMemory,'')
+    if (!verifyIfAsyncStorageExist) {
+      await AsyncStorage.setItem(nameMemory, '')
     }
     setIsLoading(false)
     saveAsync(nameImage, captured);
@@ -128,7 +132,7 @@ export default function Cam() {
       )}
       <Camera style={styles.camera} type={type} ref={cameraRef}>
         <Buttons >
-        <Text style={styles.text}></Text>
+          <Text style={styles.text}></Text>
           <ButtonPicture onPress={capture}>
             <Ionicons name="camera-outline" size={40} color="white" />
           </ButtonPicture>

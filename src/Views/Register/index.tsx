@@ -249,17 +249,17 @@ export function Register() {
     const async = JSON.parse(document);
     const objctSend = {
       chargeEvidence: {
-        date: new Date(),
+        date: async['carga'].date,
         name: allLocations.carga,
         location: { lat: async['carga'].lat, lng: async['carga'].lng },
       },
       dischargeEvidence: {
-        date: new Date(),
+        date:  async['descarga'].date,
         name: allLocations.descarga,
         location: { lat: async['descarga'].lat, lng: async['descarga'].lng },
       },
       documentEvidence: {
-        date: new Date(),
+        date: async['documento'].date,
         name: allLocations.documento,
         location: { lat: async['documento'].lat, lng: async['documento'].lng },
       },
@@ -267,23 +267,23 @@ export function Register() {
       historicoEstoqueId: id,
       s3: true,
     };
+    console.log(objctSend,document)
     await uploadDatas(objctSend)
   }
 
   async function uploadDatas(objctSend: any) {
     const { id }: any = route.params;
     const nameMemory = JSON.stringify(id)
-    console.log(objctSend)
     try {
       const { data } = await Api.post('/', objctSend, {
         headers: {
           Authorization: user.auth_key,
         },
       });
+
+      console.log(data)
       AsyncStorage.removeItem(nameMemory)
       setIsLoading(false)
-
-
       Alert.alert('Sucesso', 'Evidências gravadas com sucesso', [
         { text: 'OK', onPress: () => navigation.navigate('Home') },
       ]);
