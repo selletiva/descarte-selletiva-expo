@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import {  useNavigation } from '@react-navigation/native';
+import React, {  useEffect, useState } from 'react';
 import * as Location from 'expo-location';
 import {
   View,
@@ -15,13 +15,11 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import * as MediaLibrary from 'expo-media-library';
 
 import { Card } from '../../components/Card';
-import { Spiner } from '../../components/Spiner';
 import { useAuth } from '../../hooks/useAuth';
 
 import styled from './styled';
 import Api from '../../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Camera } from 'expo-camera';
 import Spinner from 'react-native-loading-spinner-overlay';
 
 type historiesProps = {
@@ -34,7 +32,8 @@ export default function Home() {
   const [hasCameraPermission, setHasCameraPermission] = useState(null);
   const [hasMediaLibraryPermission, setHasMediaLibraryPermission] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [dictionary, setDictionary] = useState({})
+
   useEffect(() => {
     (async () => {
       const cameraStatus = await Camera.requestCameraPermissionsAsync();
@@ -51,7 +50,21 @@ export default function Home() {
   }, []);
 
 
-  async function getPermissionCam(){
+  async function getDicionary() {
+    try {
+      const languageSelected = await AsyncStorage.getItem('languageSelected')
+      const Parsejson = JSON.parse(languageSelected)
+      setDictionary(Parsejson)
+    }
+    catch (error) {
+      Alert.alert('Erro', dictionary["ErroAoRecuperarTraduções"] ?? "Erro ao recuperar traduções", [
+        { text: 'ok' }
+      ])
+    }
+  }
+
+
+  async function getPermissionCam() {
     const { status } = await MediaLibrary.requestPermissionsAsync();
     setHasCameraPermission(status === 'granted');
   }
@@ -66,7 +79,7 @@ export default function Home() {
     );
   }
 
-  async function getPermission(){
+  async function getPermission() {
     const { status } = await MediaLibrary.requestPermissionsAsync();
     setHasMediaLibraryPermission(status === 'granted');
   }
@@ -79,7 +92,7 @@ export default function Home() {
       </View>
     );
   }
-  
+
   function logout() {
     doLogout();
   }
@@ -113,12 +126,14 @@ export default function Home() {
     return unsubscribe;
   }
 
-  useEffect(() =>{
+  useEffect(() => {
 
     getDatas();
-  },[])
+    getDicionary()
+  }, [])
   useEffect(() => {
     fetchData();
+    getDicionary()
   }, [navigation]);
 
 
@@ -138,20 +153,20 @@ export default function Home() {
           <View style={styled.infoUser}>
             <Icon name="user" size={30} color="#507EA6" />
             <Text style={styles.textBold}>
-              <Text style={styles.textDescription}>Usuário: </Text>
+              <Text style={styles.textDescription}>{dictionary ? `${dictionary["Usuário"]}: ` : "Usuário: "} </Text>
               {user.nome || "Usuário"}
             </Text>
           </View>
           <View style={styled.infoUser}>
             <Icon name="map-marker" size={30} color="#507EA6" />
             <Text style={styles.textBold}>
-              <Text style={styles.textDescription}>Empresa: </Text>
+              <Text style={styles.textDescription}>{dictionary ? `${dictionary["Empresa"]} :` : "Empresa :"} </Text>
               {user.nome_fantasia}
             </Text>
           </View>
         </View>
         <TouchableOpacity style={styled.iconReload} onPress={fetchData}>
-          <Text style={styled.textReload}>Recarregar</Text>
+          <Text style={styled.textReload}>{dictionary ? `${dictionary["Recarregar"]}: ` : "Recarregar: "}</Text>
           <Icon name="refresh" size={20} color="#000" />
         </TouchableOpacity>
       </View>
@@ -162,7 +177,7 @@ export default function Home() {
 
       <ScrollView>
         <View>
-          {histories.length == 0 ? <Text  style={styled.textCenter} > *Sem Solicitações*</Text> : null}
+          {histories.length == 0 ? <Text style={styled.textCenter} > {dictionary ? `*${dictionary["SemSolicitações"]}* ` : "*Sem Solicitações*"}</Text> : null}
           {histories.map(history => {
             return <Card element={history} key={history.id} />;
           })}

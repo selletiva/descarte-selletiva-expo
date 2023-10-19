@@ -24,6 +24,7 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 // import MapWithRoute from '../../components/mapa';
+
 import { useAuth } from '../../hooks/useAuth';
 import { StackAuthenticatedParamList } from '../../routes';
 import Api from '../../services/api';
@@ -51,6 +52,7 @@ export function Register() {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [documentoExist, setDocumentoExist] = useState(null)
+  const [dictionary, setDictionary] = useState({})
 
   const route = useRoute();
 
@@ -75,7 +77,7 @@ export function Register() {
 
       setArrayTipoDocumento(tipoDocumento.data);
     } catch (error) {
-      Alert.alert('Erro', 'Erro ao recuperar solicitação', [
+      Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["ErroAoRecuperarSolicitação"] ?? 'Erro ao recuperar solicitação', [
         { text: 'OK', onPress: () => console.log('OK Pressed') },
       ]);
     }
@@ -165,7 +167,7 @@ export function Register() {
 
     } catch (error) {
       setIsLoading(false)
-      Alert.alert('Erro', 'Erro ao salvar evidências no s3', [
+      Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["ErroAoSalvarEvidênciasNoS3"] ?? 'Erro ao salvar evidências no s3', [
         { text: 'Ok' },
         { text: 'Reenviar', onPress: () => sandToS3(name, buffer) },
       ]);
@@ -204,7 +206,7 @@ export function Register() {
       documento === 'Selecionar' ||
       peso === '0'
     ) {
-      Alert.alert('Sem documento', 'Cadastrar informações do documento', [
+      Alert.alert(dictionary["SemDocumento"] ?? 'Sem documento', dictionary["CadastrarInformaçõesDoDocumento"] ?? 'Cadastrar informações do documento', [
         { text: 'OK' },
       ]);
       return;
@@ -254,7 +256,7 @@ export function Register() {
         location: { lat: async['carga'].lat, lng: async['carga'].lng },
       },
       dischargeEvidence: {
-        date:  async['descarga'].date,
+        date: async['descarga'].date,
         name: allLocations.descarga,
         location: { lat: async['descarga'].lat, lng: async['descarga'].lng },
       },
@@ -267,7 +269,6 @@ export function Register() {
       historicoEstoqueId: id,
       s3: true,
     };
-    console.log(objctSend,document)
     await uploadDatas(objctSend)
   }
 
@@ -281,15 +282,14 @@ export function Register() {
         },
       });
 
-      console.log(data)
       AsyncStorage.removeItem(nameMemory)
       setIsLoading(false)
-      Alert.alert('Sucesso', 'Evidências gravadas com sucesso', [
+      Alert.alert(dictionary["Sucesso"] ?? 'Sucesso', dictionary["EvidênciasGravadasComSucesso"] ?? 'Evidências gravadas com sucesso', [
         { text: 'OK', onPress: () => navigation.navigate('Home') },
       ]);
     } catch (error) {
       setIsLoading(false)
-      Alert.alert('Erro', 'Erro ao salvar evidências', [
+      Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["ErroAoSalvarEvidências"] ?? 'Erro ao salvar evidências', [
         { text: 'OK', onPress: () => console.log('OK Pressed') },
       ]);
     }
@@ -299,9 +299,9 @@ export function Register() {
   async function handleDeleteEvidence(param: string) {
     const { id }: any = route.params;
     const nameMemory = JSON.stringify(id)
-    Alert.alert('Deletar evidência', `Deseja deletar a evidência de ${param}`, [
-      { text: 'Cancelar' },
-      { text: 'Deletar', onPress: () => AceptExcluir(param, id, nameMemory) }
+    Alert.alert(dictionary["DeletarEvidencia"] ?? 'Deletar evidência', `${dictionary["DesejaDeletarAEvidênciaDe"]} ${param}`, [
+      { text: dictionary["Cancelar"] ?? 'Cancelar' },
+      { text: dictionary["Deletar"] ?? 'Deletar', onPress: () => AceptExcluir(param, id, nameMemory) }
     ]);
   }
 
@@ -332,15 +332,29 @@ export function Register() {
         setDocumentExist(null)
       }
     } catch {
-      Alert.alert('Erro', 'Erro ao excluir evidência', [
-        { text: 'OK', onPress: () => console.log('OK Pressed') },
+      Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["ErroAoExcluirEvidência"] ?? 'Erro ao excluir evidência', [
+        { text: 'OK' },
       ]);
+    }
+  }
+
+  async function getDicionary() {
+    try {
+      const languageSelected = await AsyncStorage.getItem('languageSelected')
+      const Parsejson = JSON.parse(languageSelected)
+      setDictionary(Parsejson)
+    }
+    catch (error) {
+      Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["ErroAoRecuperarTraduções"] ?? "Erro ao recuperar traduções", [
+        { text: 'ok' }
+      ])
     }
   }
   useFocusEffect(
     useCallback(() => {
       getPictures();
       getDatas();
+      getDicionary()
     }, [])
   );
   return (
@@ -378,7 +392,7 @@ export function Register() {
         <></>
       )}
       <View style={styles.selectOption}>
-        <Text style={styles.text}>Tipo de Documento: </Text>
+        <Text style={styles.text}>{dictionary ? `${dictionary["TipoDeDocumento"]}: ` : "Tipo de Documento"} </Text>
         <Picker
           style={styles.padron}
           onValueChange={itemValue => setDocumento(itemValue)}
@@ -394,7 +408,7 @@ export function Register() {
             );
           })}
         </Picker>
-        <Text style={styles.text}>Nº documento: </Text>
+        <Text style={styles.text}>{dictionary ? `${dictionary["NºDocumento"]}:` : "Nº documento:"} </Text>
         <TextInput
           value={N_Documento}
           keyboardType="numeric"
@@ -403,7 +417,7 @@ export function Register() {
         />
         <View style={styles.flexView}>
           <View>
-            <Text style={styles.text}>Quantidade: </Text>
+            <Text style={styles.text}>{dictionary ? `${dictionary["Quantidade"]}: ` : "Quantidade: "} </Text>
             <TextInput
               keyboardType="numeric"
               value={peso}
@@ -412,7 +426,7 @@ export function Register() {
             />
           </View>
           <View style={styles.teste}>
-            <Text style={styles.text}>Unidade: </Text>
+            <Text style={styles.text}>{dictionary ? `${dictionary["Unidade"]}: ` : "Unidade"} </Text>
             <Picker
               onValueChange={itemValue => setUnidade(itemValue)}
               selectedValue={unidade}>
@@ -438,7 +452,7 @@ export function Register() {
           <TouchableOpacity
             style={styles.buttonCam}
             onPress={() => handleLocationToCam('carga')}>
-            <Text style={styles.text}>Carga</Text>
+            <Text style={styles.text}>{dictionary ? dictionary["Carga"] : "Carga"}</Text>
             <Icon name="camera" size={30} color="#370acd" />
           </TouchableOpacity>
         )}
@@ -453,7 +467,8 @@ export function Register() {
           <TouchableOpacity
             style={styles.buttonCam}
             onPress={() => handleLocationToCam('descarga')}>
-            <Text style={styles.text}>Descarga</Text>
+            <Text style={styles.text}>{dictionary ? dictionary["Descarga"] : "Descarga"}</Text>
+
             <Icon name="camera" size={30} color="#370acd" />
           </TouchableOpacity>
         )}
@@ -467,14 +482,14 @@ export function Register() {
           <TouchableOpacity
             style={styles.buttonCam}
             onPress={() => handleLocationToCam('documento')}>
-            <Text style={styles.text}>Documento</Text>
+            <Text style={styles.text}>{dictionary ? dictionary["Documento"] : "Documento"}</Text>
             <Icon name="camera" size={30} color="#370acd" />
           </TouchableOpacity>
 
         )}
       </View>
       <TouchableOpacity onPress={sendBackend} style={styles.sendEvidencesView}>
-        <Text style={{ color: 'white' }}>Enviar</Text>
+        <Text style={{ color: 'white' }}>{dictionary ? dictionary["Enviar"] : "Enviar"}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

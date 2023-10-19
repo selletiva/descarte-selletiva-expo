@@ -7,6 +7,19 @@ const styled = StyleSheet.create({
     backgroundColor: 'f0f0f5',
     justifyContent: 'center',
   },
+  linguage: {
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%',
+    alignItems: 'center'
+  },
+  selectLinguage: {
+    width: '80%',
+    height: '30%',
+  },
+  optionLanguage: {
+    height: '40%',
+  },
 
   viewIcon: {
     backgroundColor: 'transparent',
@@ -25,7 +38,7 @@ const styled = StyleSheet.create({
     alignItems: 'center',
     marginTop: 15,
     marginBottom: 20,
-    justifyContent:'center'
+    justifyContent: 'center'
 
   },
   iconButton: {

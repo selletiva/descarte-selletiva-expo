@@ -1,41 +1,60 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native';
 
 import { StackAuthenticatedParamList } from '../../routes';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 export function Card({ element }: any) {
+  const [dictionary, setDictionary] = useState({})
+
   const navigation =
     useNavigation<NativeStackNavigationProp<StackAuthenticatedParamList>>();
 
-    useEffect(() =>{
-      console.log(element.destination)
-    },[])
-    
-    function makePhoto() {
+
+  function makePhoto() {
     navigation.navigate('Register', { id: element.id });
   }
+
+  async function getDicionary() {
+    try {
+      const languageSelected = await AsyncStorage.getItem('languageSelected')
+      const Parsejson = JSON.parse(languageSelected)
+      setDictionary(Parsejson)
+    }
+    catch (error) {
+      Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["ErroAoRecuperarTraduções"] ?? "Erro ao recuperar traduções", [
+        { text: 'ok' }
+      ])
+    }
+  }
+
+
+  useEffect(() => {
+    getDicionary()
+  }, [])
   return (
     <>
       {!element.detalhe_registro_saida_id ? (
         <TouchableOpacity onPress={makePhoto}>
           <View style={styles.container}>
             <Text style={styles.title}>
-              Tipo de resíduo: {!element.type ? "Sem tipo" :element.type.nome}
+              {dictionary ? `${dictionary["TipoDeResíduo"]}: `: "Tipo de resíduo: " }{!element.type ? "Sem tipo" : element.type.nome}
             </Text>
             <Text style={styles.title}>
-              Destinatário: {!element.destination ?"Sem destinatário": element.destination.nome }
+              {dictionary ? `${dictionary["Destinatário"]}: `: "Destinatário: " } {!element.destination ? "Sem destinatário" : element.destination.nome}
+
             </Text>
             <Text style={styles.title}>
-              Quantidade da operação: {!element.quantity?"Sem quantidade" : element.quantity} {!element.unitLabel ? "Sem unidade de medida" : element.unitLabel}
+            {dictionary ? `${dictionary["QuantidadeDaOperação"]}: `: "Quantidade da operação: " }{!element.quantity ? "Sem quantidade" : element.quantity} {!element.unitLabel ? "Sem unidade de medida" : element.unitLabel}
             </Text>
             <View style={styles.dateAndCNumberDoc}>
               <Text style={styles.text}>
-                Bairro: {!element.destination ? "Sem bairro" :element.destination.address.district }
+              {dictionary ? `${dictionary["Bairro"]}: `: "Bairro: " } {!element.destination ? "Sem bairro" : element.destination.address.district}
               </Text>
               <Text style={styles.text}>
-                Logradouro: {!element.destination ? "Sem logradouro" :element.destination.address.street }
+              {dictionary ? `${dictionary["Logradouro"]}: `: "Logradouro: " } {!element.destination ? "Sem logradouro" : element.destination.address.street}
               </Text>
             </View>
           </View>

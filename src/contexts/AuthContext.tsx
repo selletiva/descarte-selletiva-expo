@@ -18,10 +18,9 @@ import {
 } from '../routes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ModalAlert from '../components/Modal';
-import axios, { Axios } from 'axios';
 import { Alert } from 'react-native';
 
-export const AuthContext =  createContext({} as AuthProviderReturn);
+export const AuthContext = createContext({} as AuthProviderReturn);
 
 type AuthProviderProps = {
   children: ReactNode;
@@ -42,6 +41,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
   const [user, setUser] = useState<Object>({});
   const [active, setActive] = useState(false);
   const [textModal, setTextModal] = useState('');
+  const [dictionary, setDictionary] = useState({})
+
   const navigation =
     useNavigation<
       CompositeNavigationProp<
@@ -49,6 +50,19 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
         NativeStackNavigationProp<StackNotAuthenticatedParamList>
       >
     >();
+
+  async function getDicionary() {
+    try {
+      const languageSelected = await AsyncStorage.getItem('languageSelected')
+      const Parsejson = JSON.parse(languageSelected)
+      setDictionary(Parsejson)
+    }
+    catch (error) {
+      Alert.alert('Erro', dictionary["ErroAoRecuperarTraduções"] ?? "Erro ao recuperar traduções", [
+        { text: 'ok' }
+      ])
+    }
+  }
 
   const doLogin = useCallback(async (key: string) => {
     try {
@@ -61,22 +75,23 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
         },
         body: JSON.stringify({ key })
       });
-    
+
       if (response.ok) {
         const userData = await response.json();
-    
+
         setUser(userData);
         setIsAuthenticated(true);
-    
+
         await AsyncStorage.setItem('user', JSON.stringify(userData));
       } else {
-        Alert.alert('Erro', 'Código de acesso inválido', [
+        Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["CódigoDeAccesoInválido"] ?? 'Código de acesso inválido', [
           { text: 'OK' },
         ]);
         return
       }
     } catch (e) {
-      Alert.alert('Erro', 'Código de acesso inválido', [
+      Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["CódigoDeAccesoInválido"] ?? 'Código de acesso inválido', [
+
         { text: 'OK' },
       ]);
       return
@@ -127,6 +142,9 @@ const AuthProvider: React.FC<AuthProviderProps> = ({
     setActive(!active);
   }
 
+  useEffect(() => {
+    getDicionary()
+  }, [])
   return (
     <AuthContext.Provider value={returnedValues}>
       <ModalAlert setActive={openModal} showModal={active} text={textModal} />
