@@ -78,6 +78,8 @@ const styled = StyleSheet.create({
   textReload: {
     color: 'grey',
   },
+
+  
 });
 
 export default styled;

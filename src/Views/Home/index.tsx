@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {  useNavigation } from '@react-navigation/native';
-import React, {  useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
+
 import {
   View,
   Text,
@@ -21,6 +22,8 @@ import styled from './styled';
 import Api from '../../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Spinner from 'react-native-loading-spinner-overlay';
+import Map from '../../components/maps';
+import { Camera } from 'expo-camera';
 
 type historiesProps = {
   id: number;
@@ -44,7 +47,7 @@ export default function Home() {
       const { status } = await MediaLibrary.requestPermissionsAsync();
       setHasMediaLibraryPermission(status === 'granted');
     })();
-    (async () =>{
+    (async () => {
       await Location.requestForegroundPermissionsAsync();
     })()
   }, []);
@@ -182,6 +185,7 @@ export default function Home() {
             return <Card element={history} key={history.id} />;
           })}
         </View>
+        <Map />
       </ScrollView>
     </SafeAreaView>
   );
