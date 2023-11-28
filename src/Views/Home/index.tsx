@@ -37,20 +37,20 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [dictionary, setDictionary] = useState({})
 
-  useEffect(() => {
-    (async () => {
-      const cameraStatus = await Camera.requestCameraPermissionsAsync();
-      setHasCameraPermission(cameraStatus.status === 'granted');
+  // useEffect(() => {
+  //   (async () => {
+  //     const cameraStatus = await Camera.requestCameraPermissionsAsync();
+  //     setHasCameraPermission(cameraStatus.status === 'granted');
 
-    })();
-    (async () => {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      setHasMediaLibraryPermission(status === 'granted');
-    })();
-    (async () => {
-      await Location.requestForegroundPermissionsAsync();
-    })()
-  }, []);
+  //   })();
+  //   (async () => {
+  //     const { status } = await MediaLibrary.requestPermissionsAsync();
+  //     setHasMediaLibraryPermission(status === 'granted');
+  //   })();
+  //   (async () => {
+  //     await Location.requestForegroundPermissionsAsync();
+  //   })()
+  // }, []);
 
 
   async function getDicionary() {
@@ -185,7 +185,6 @@ export default function Home() {
             return <Card element={history} key={history.id} />;
           })}
         </View>
-        <Map />
       </ScrollView>
     </SafeAreaView>
   );

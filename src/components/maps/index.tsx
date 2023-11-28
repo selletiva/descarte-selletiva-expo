@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Text, TouchableOpacity } from 'react-native'
-import { showLocation } from 'react-native-map-link';
+import { Alert, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { showLocation, getApps } from 'react-native-map-link';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import * as Location from 'expo-location';
 
-export default function Map() {
+export default function Map({ coords }) {
     const [lat, setLat] = useState(null)
     const [lng, setLng] = useState(null)
 
@@ -17,16 +18,27 @@ export default function Map() {
         setLng(currentLocation.coords.longitude)
     }
 
-    function plotRoute() {
+    async function plotRoute() {
+        const apps = await getApps({
+            appsWhiteList: ['waze'],
+            latitude: -3.8044768966064506,
+            longitude: -38.52887662007451,
+        })
+        if (apps.length == 0) {
+            Alert.alert('Erro', 'Waze não encontrado', [
+                { text: 'OK' }
+            ]);
+            return
+        }
         showLocation({
             appsWhiteList: ['waze'],
-            latitude: -3.8033259,
-            longitude: -38.6111054,
+            latitude: coords.lat,
+            longitude: coords.lng,
             sourceLatitude: lat,
             sourceLongitude: lng,
             directionsMode: 'car',
         })
-
+        console.log('Rota sendo traçada...');
     }
 
 
@@ -35,8 +47,23 @@ export default function Map() {
 
     }, [])
     return (
-        <TouchableOpacity onPress={plotRoute}>
-            <Text>Traçar rota</Text>
+        <TouchableOpacity onPress={plotRoute} style={styles.locationView}>
+            <Text style={{ color: 'white' }}>
+                <Icon name="map-marker" size={30} color="#FFFFFF" />
+            </Text>
         </TouchableOpacity>
     )
 }
+
+const styles = StyleSheet.create({
+    locationView: {
+        backgroundColor: '#507EA6',
+        height: 50,
+        justifyContent: 'center',
+        borderRadius: 100,
+        alignItems: 'center',
+        width: 50,
+        top: 0,
+        left: 270,
+    }
+})

@@ -30,6 +30,7 @@ import { StackAuthenticatedParamList } from '../../routes';
 import Api from '../../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Spinner from 'react-native-loading-spinner-overlay';
+import Map from '../../components/maps';
 
 type returnDatas = {
   id: Number;
@@ -54,6 +55,8 @@ export function Register() {
   const [documentoExist, setDocumentoExist] = useState(null)
   const [dictionary, setDictionary] = useState({})
 
+
+  const [coords, setCoords] = useState({lat:"", lng:""})
   const route = useRoute();
 
   const navigation = useNavigation<NativeStackNavigationProp<StackAuthenticatedParamList>>();
@@ -352,6 +355,8 @@ export function Register() {
   }
   useFocusEffect(
     useCallback(() => {
+      const { lat, lng }: any = route.params;
+      setCoords({ lat, lng })
       getPictures();
       getDatas();
       getDicionary()
@@ -364,7 +369,8 @@ export function Register() {
         textContent={'Enviando evidências...'}
         textStyle={{ color: '#FFF' }}
       />
-      {/* {showMap ?? <MapWithRoute onClose={handleMapa} />} */}
+      <Map coords={coords}/>
+
       {see === true ? (
         <View style={styles.centeredView}>
           <Modal animationType="slide" transparent={true} visible={see}>

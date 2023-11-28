@@ -14,7 +14,7 @@ export function Card({ element }: any) {
 
 
   function makePhoto() {
-    navigation.navigate('Register', { id: element.id });
+    navigation.navigate('Register', { id: element.id, lat: element.lat, lng: element.lng });
   }
 
   async function getDicionary() {
@@ -40,21 +40,21 @@ export function Card({ element }: any) {
         <TouchableOpacity onPress={makePhoto}>
           <View style={styles.container}>
             <Text style={styles.title}>
-              {dictionary ? `${dictionary["TipoDeResíduo"]}: `: "Tipo de resíduo: " }{!element.type ? "Sem tipo" : element.type.nome}
+              {dictionary ? `${dictionary["TipoDeResíduo"]}: ` : "Tipo de resíduo: "}{!element.type ? "Sem tipo" : element.type.nome}
             </Text>
             <Text style={styles.title}>
-              {dictionary ? `${dictionary["Destinatário"]}: `: "Destinatário: " } {!element.destination ? "Sem destinatário" : element.destination.nome}
+              {dictionary ? `${dictionary["Destinatário"]}: ` : "Destinatário: "} {!element.destination ? "Sem destinatário" : element.destination.nome}
 
             </Text>
             <Text style={styles.title}>
-            {dictionary ? `${dictionary["QuantidadeDaOperação"]}: `: "Quantidade da operação: " }{!element.quantity ? "Sem quantidade" : element.quantity} {!element.unitLabel ? "Sem unidade de medida" : element.unitLabel}
+              {dictionary ? `${dictionary["QuantidadeDaOperação"]}: ` : "Quantidade da operação: "}{!element.quantity ? "Sem quantidade" : element.quantity} {!element.unitLabel ? "Sem unidade de medida" : element.unitLabel}
             </Text>
             <View style={styles.dateAndCNumberDoc}>
               <Text style={styles.text}>
-              {dictionary ? `${dictionary["Bairro"]}: `: "Bairro: " } {!element.destination ? "Sem bairro" : element.destination.address.district}
+                {dictionary ? `${dictionary["Bairro"]}: ` : "Bairro: "} {!element.destination ? "Sem bairro" : element.destination.address.district}
               </Text>
               <Text style={styles.text}>
-              {dictionary ? `${dictionary["Logradouro"]}: `: "Logradouro: " } {!element.destination ? "Sem logradouro" : element.destination.address.street}
+                {dictionary ? `${dictionary["Logradouro"]}: ` : "Logradouro: "} {!element.destination ? "Sem logradouro" : element.destination.address.street}
               </Text>
             </View>
           </View>
