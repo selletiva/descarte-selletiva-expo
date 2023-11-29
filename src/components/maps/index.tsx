@@ -20,31 +20,34 @@ export default function Map({ coords }) {
 
     async function plotRoute() {
         const apps = await getApps({
-            appsWhiteList: ['waze'],
+            appsWhiteList: ['google-maps'],
             latitude: -3.8044768966064506,
             longitude: -38.52887662007451,
         })
         if (apps.length == 0) {
-            Alert.alert('Erro', 'Waze não encontrado', [
+            Alert.alert('Erro', 'É necessário instalar um aplicativo de rota', [
                 { text: 'OK' }
             ]);
             return
-        }
-        showLocation({
-            appsWhiteList: ['waze'],
-            latitude: coords.lat,
-            longitude: coords.lng,
-            sourceLatitude: lat,
-            sourceLongitude: lng,
-            directionsMode: 'car',
-        })
-        console.log('Rota sendo traçada...');
+        } 
+        Alert.alert('Você deseja traçar rota ?', '', [
+            { text: 'Sim', onPress: () => {
+                showLocation({
+                    appsWhiteList: ['google-maps'],
+                    latitude: coords.lat,
+                    longitude: coords.lng,
+                    sourceLatitude: lat,
+                    sourceLongitude: lng,
+                    directionsMode: 'car',
+                })
+            } },
+            { text: 'Não', onPress: () =>{ return } }
+        ]);
     }
 
 
     useEffect(() => {
         getLocation()
-
     }, [])
     return (
         <TouchableOpacity onPress={plotRoute} style={styles.locationView}>
@@ -57,13 +60,13 @@ export default function Map({ coords }) {
 
 const styles = StyleSheet.create({
     locationView: {
-        backgroundColor: '#507EA6',
+        left: 290,
+        width: 50,
         height: 50,
-        justifyContent: 'center',
+        marginTop: "20%",
         borderRadius: 100,
         alignItems: 'center',
-        width: 50,
-        top: 0,
-        left: 270,
+        justifyContent: 'center',
+        backgroundColor: '#507EA6'
     }
 })

@@ -21,9 +21,9 @@ export default function Linguages({ ChangeLanguage }) {
             await AsyncStorage.setItem('languages', JSON.stringify(data))
         }
         catch (error) {
-            Alert.alert('Erro', "Erro ao recuperar as linguages", [
-                { text: 'ok' }
-            ])
+            // Alert.alert('Erro', "Erro ao recuperar as linguages", [
+            //     { text: 'ok' }
+            // ])
         }
     }
 

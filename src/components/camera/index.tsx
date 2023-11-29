@@ -19,25 +19,9 @@ export default function Cam() {
   const { id, type } = route.params;
   const [textSpeener, setTextSpeener] = useState('Carregando...')
   const cameraRef = useRef<Camera>(null);
-  const [dictionary, setDictionary] = useState({})
-
-
-
-  async function getDicionary() {
-    try {
-      const languageSelected = await AsyncStorage.getItem('languageSelected')
-      const Parsejson = JSON.parse(languageSelected)
-      setDictionary(Parsejson)
-    }
-    catch (error) {
-      Alert.alert('Erro', dictionary["ErroAoRecuperarTraduções"] ?? "Erro ao recuperar traduções", [
-        { text: 'ok' }
-      ])
-    }
-  }
 
   async function capture() {
-    setTextSpeener(dictionary["Capturando"] ?? 'Capturando...')
+    setTextSpeener('Capturando...')
     setIsLoading(true)
     try {
       const { uri } = await cameraRef.current.takePictureAsync({
@@ -47,9 +31,9 @@ export default function Cam() {
       setIsLoading(false)
     } catch (error) {
       setIsLoading(false)
-      Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["ErroAoCapturarEvidência"] ?? "Erro ao capturar evidência", [
-        { text: dictionary["Retornar"] ?? 'Retornar', onPress: () => navigation.navigate('Register', { id }) },
-        { text: dictionary["TirarNovamente"] ?? 'Tirar novamente' }
+      Alert.alert('Erro', "Erro ao capturar evidência", [
+        { text: 'Retornar', onPress: () => navigation.navigate('Register', { id }) },
+        { text: 'Tirar novamente' }
       ])
     }
   };
@@ -58,7 +42,7 @@ export default function Cam() {
     const nameMemory = JSON.stringify(id)
     setIsLoading(true)
     const localStorage = await AsyncStorage.getItem(nameMemory)
-    setTextSpeener(dictionary["BuscandoLocalização"] ?? 'Buscando localização...')
+    setTextSpeener('Buscando localização...')
     setIsLoading(false)
     let currentLocation = await Location.getCurrentPositionAsync({
       timeInterval: 3000,
@@ -66,7 +50,7 @@ export default function Cam() {
     });
 
     if (!currentLocation) {
-      Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["NãoFoiPossívelSalvarLocalização"] ?? 'Não foi possível salvar localização', [
+      Alert.alert('Erro', 'Não foi possível salvar localização', [
         { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
       ]);
     }
@@ -83,16 +67,16 @@ export default function Cam() {
     }
 
     if (!localStorage) {
-      setTextSpeener(dictionary["GravandoNoCelular"] ?? 'Gravando no celular...')
+      setTextSpeener('Gravando no celular...')
       try {
         await AsyncStorage.setItem(nameMemory, JSON.stringify(saveEvidence))
         setIsLoading(false)
         navigation.navigate('Register', { id })
       } catch {
         setIsLoading(false)
-        Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["NãoFoiPossívelSalvarAImagem"] ?? 'Não foi possível salvar a imagem', [
+        Alert.alert('Erro','Não foi possível salvar a imagem', [
           { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
-          { text: dictionary["SalvarNovamente"] ?? 'Salvar novamente', onPress: () => savePicture() },
+          { text: 'Salvar novamente', onPress: () => savePicture() },
         ]);
       }
       return
@@ -104,10 +88,10 @@ export default function Cam() {
       navigation.navigate('Register', { id })
     } catch {
       setIsLoading(false)
-      Alert.alert(dictionary["Erro"] ?? 'Erro', dictionary["NãoFoiPossívelSalvarAImagem"] ?? 'Não foi possível salvar a imagem', [
+      Alert.alert('Erro','Não foi possível salvar a imagem', [
 
         { text: 'OK', onPress: () => navigation.navigate('Register', { id }) },
-        { text: dictionary["SalvarNovamente"] ?? 'Salvar novamente', onPress: () => savePicture() },
+        { text: 'Salvar novamente', onPress: () => savePicture() },
 
       ]);
     }
@@ -117,7 +101,7 @@ export default function Cam() {
 
   async function savePicture() {
     setIsLoading(true)
-    setTextSpeener(dictionary["Salvando"] ?? 'Salvando')
+    setTextSpeener('Salvando')
     const nameMemory = JSON.stringify(id)
     const nameImage = `${type.toString()}`;
     const verifyIfAsyncStorageExist = await AsyncStorage.getItem(nameMemory)
@@ -131,11 +115,6 @@ export default function Cam() {
   async function trashImage() {
     setCapturedImage(null)
   }
-
-  useEffect(() => {
-
-    getDicionary()
-  }, [])
 
   return (
     <View style={styles.container}>
